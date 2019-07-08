@@ -1,8 +1,8 @@
 from random import randint
 
 def genIstanza():
-	minP = 1
-	maxP = 10
+	minP = 10
+	maxP = 20
 
 	nPazienti = randint(minP,maxP)
 

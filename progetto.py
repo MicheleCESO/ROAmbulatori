@@ -33,24 +33,23 @@ def risolvi(ist):
 
 		while flag and index < len(ist):
 			if index in indiciUtilizzabili:
-				conflitto, sol = confronto(ist,startJ,listaPazienti,index,statoStanze[minimo[0]]) # Confrontiamo paziente scelto attuale con quelli precedentemente scelti
+				conflitto, soluzione = confronto(ist,startJ,listaPazienti,index,statoStanze[minimo[0]]) # Confrontiamo paziente scelto attuale con quelli precedentemente scelti
 			
 				if conflitto < minimoConflitto:
 					minimoConflitto = conflitto
 					indexSol = index
+					sol = soluzione
 				if conflitto == 0:
 					flag = False
 			index += 1
 
 		# Inserimento in ambulatorio
 		listaPazienti.append(indexSol)
+		print(indexSol,sol,indexSol-1,"\n",ist)
 		ist[indexSol] = sol
 		gestionePazienti[minimo[0]] = indexSol
 		storicoPazienti[indexSol] = minimo[0]
-		#print("***",gestionePazienti,minimo[0],sol)
-		print("***",gestionePazienti,indiciUtilizzabili,indexSol)
 		indiciUtilizzabili.remove(indexSol) # Cancello elemento già estratto
-		listaPazienti.append(indexSol)
 
 		# Aggiornamento ambulatorio
 		statoStanze[minimo[0]] += conflitto
@@ -62,7 +61,6 @@ def risolvi(ist):
 def cancellaPazienti(listaPazienti,ambulatori,minimo,collegamento):
 	for elm in minimo[::-1]:
 		if ambulatori[elm] > 0:
-			print("*_*",listaPazienti,collegamento[elm])
 			listaPazienti.remove(collegamento[elm])
 
 # Ritorna gli indici con i valori minimi della lista
@@ -100,7 +98,7 @@ def confronto(istanza, startJobs, pazientiInAmbulatorio, nuovoPaziente, startNuo
 	else:
 		lista2 = istanza[pazientiInAmbulatorio[1]]
 		start2 = startJobs[pazientiInAmbulatorio[1]]
-
+		#print("++++++",istanza,"\n",startJobs,"\n",pazientiInAmbulatorio[1])
 	costo = 9999
 	for p3 in lista3:
 		startAttuali = {} # Resetto gli start del nuovo paziente
@@ -110,12 +108,14 @@ def confronto(istanza, startJobs, pazientiInAmbulatorio, nuovoPaziente, startNuo
 		for elm in p3:
 			startAttuali[elm] = startScorr
 			startScorr += pi[elm-1] # Aggiorno lo start
-		print("---->",p3,startAttuali)
+
+		#print("1---->",p3,startAttuali)
 		livelloConflitto1 = verifica(istanza[pazientiInAmbulatorio[0]],startJobs[pazientiInAmbulatorio[0]],p3,startAttuali)
+		#print("2---->",start2,p3,startAttuali)
 		livelloConflitto2 = verifica(lista2,start2,p3,startAttuali)
-		
+		#print("3---->",p3,startAttuali)
 		totaleConflitto = livelloConflitto1 + livelloConflitto2
-		print("--->",totaleConflitto)
+		#print("--->",totaleConflitto)
 		if totaleConflitto < costo:
 			costo = totaleConflitto
 			sol = p3
@@ -123,7 +123,7 @@ def confronto(istanza, startJobs, pazientiInAmbulatorio, nuovoPaziente, startNuo
 		if totaleConflitto == 0:
 			break
 
-	return costo, sol
+	return costo, list(sol)
 
 def verifica(jobsVecchi,start,jobsNuovi,startNuovo):
 	global pi
@@ -133,6 +133,7 @@ def verifica(jobsVecchi,start,jobsNuovi,startNuovo):
 		return conflittoTotale
 	for el in jobsNuovi:
 		if el in jobsVecchi: # Se ci sono due esami dello stesso tipo
+			#print("//////////////",el,start,startNuovo,jobsVecchi,jobsNuovi)
 			diff = start[el] - startNuovo[el]
 			if abs(diff) < pi[el-1]: # Conflitto
 				conflitto = diff + pi[el-1]
@@ -159,6 +160,8 @@ def disegna(dati,indiciAmbulatori):
 	root.geometry("1500x220")
 	canvas = Canvas(root,width=1500,height=220)
 	canvas.pack()
+	scrollbar = Scrollbar(root,orient=HORIZONTAL)
+	scrollbar.pack( side = RIGHT, fill = X )
 	print("indici:",indiciAmbulatori)
 	# Generazione rettangoli colorati con etichette e valori di riferimento
 	for paziente in dati:
@@ -182,11 +185,12 @@ def disegna(dati,indiciAmbulatori):
 
 if __name__ == "__main__":
 	#paziente = MCP(ist)
-	ist = [[2, 4], [4, 2, 3], [5, 4]]
+	#ist = [[2, 4], [4, 2, 3], [5, 4]]
 	# Generazione istanza casuale
 	#ist = [[4, 1], [5], [2, 5], [3]]
 	#ist = [[4, 1], [2, 5, 4, 3], [4], [1, 4, 5], [3, 4, 5], [3, 5, 2], [3, 2], [1, 3, 5], [3, 4, 5], [5, 3, 2]]
 	#ist = genIstanza()
+	ist = [[1], [2, 5], [1], [4], [1, 3, 2], [4, 5], [2, 3, 5], [1], [4, 3, 1], [4, 3], [4, 2], [3, 1], [5, 2], [1, 4, 5]] #Crea errore
 	print(ist)
 	#pprint(ist)
 	#paziente = MCP(ist)
