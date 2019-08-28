@@ -1,6 +1,10 @@
-from IstGen import genIstanza
-from itertools import permutations as perm
-from tkinter import *
+import sys										# Funzioni di sistema
+from time import sleep							# Per ritardare l'output
+from IstGen import genIstanza					# Generatore di istanze
+import config									# Gestisce la configurazione del programma
+from os.path import isfile						# Controllo presenza file
+from itertools import permutations as perm 		# Per gestire le permutazioni
+from tkinter import *							# Per la grafica
 
 pi = [1,2,3,4,5]
 
@@ -33,7 +37,7 @@ def risolvi(ist):
 
 		while flag and index < len(ist):
 			if index in indiciUtilizzabili:
-				conflitto, soluzione = confronto(ist,startJ,listaPazienti,index,statoStanze[minimo[0]]) # Confrontiamo paziente scelto attuale con quelli precedentemente scelti
+				conflitto, soluzione = confronto(ist,startJ,listaPazienti,index,statoStanze[minimo]) # Confrontiamo paziente scelto attuale con quelli precedentemente scelti
 			
 				if conflitto < minimoConflitto:
 					minimoConflitto = conflitto
@@ -47,32 +51,30 @@ def risolvi(ist):
 		listaPazienti.append(indexSol)
 		print(indexSol,sol,indexSol-1,"\n",ist)
 		ist[indexSol] = sol
-		gestionePazienti[minimo[0]] = indexSol
-		storicoPazienti[indexSol] = minimo[0]
+		gestionePazienti[minimo] = indexSol
+		storicoPazienti[indexSol] = minimo
 		indiciUtilizzabili.remove(indexSol) # Cancello elemento già estratto
 
 		# Aggiornamento ambulatorio
-		statoStanze[minimo[0]] += conflitto
+		statoStanze[minimo] += conflitto
 		for elm in ist[index-1]:
-			statoStanze[minimo[0]] += pi[elm-1]
+			statoStanze[minimo] += pi[elm-1]
 	return startJ,storicoPazienti
 
 # Cancella i pazienti che escono dagli ambulatori
 def cancellaPazienti(listaPazienti,ambulatori,minimo,collegamento):
-	for elm in minimo[::-1]:
-		if ambulatori[elm] > 0:
-			listaPazienti.remove(collegamento[elm])
+	#for elm in minimo[::-1]:
+	if ambulatori[minimo] > 0:
+		print("\n**** {} **** {}\n".format(listaPazienti,collegamento))
+		listaPazienti.remove(collegamento[minimo])
 
 # Ritorna gli indici con i valori minimi della lista
 def minStato(lista):
-	index = []
 	minimo = 9999
 	for i in range(3):
 		if minimo > lista[i]:
 			minimo = lista[i]
-			index = [i]
-		elif minimo == lista[i]:
-			index.append(i)
+			index = i
 	return index
 
 # Gestisce il confronto tra i pazienti già inseriti e uno nuovo
@@ -159,9 +161,11 @@ def disegna(dati,indiciAmbulatori):
 	root = Tk()
 	root.geometry("1500x220")
 	canvas = Canvas(root,width=1500,height=220)
-	canvas.pack()
 	scrollbar = Scrollbar(root,orient=HORIZONTAL)
-	scrollbar.pack( side = RIGHT, fill = X )
+	scrollbar.pack(side = BOTTOM,fill = X)
+	scrollbar.config(command=canvas.xview)
+	canvas.config(xscrollcommand=scrollbar.set)
+	canvas.pack()
 	print("indici:",indiciAmbulatori)
 	# Generazione rettangoli colorati con etichette e valori di riferimento
 	for paziente in dati:
@@ -180,22 +184,85 @@ def disegna(dati,indiciAmbulatori):
 	canvas.create_line(10,160,1500,160,width=3)
 	canvas.create_line(10,160,10,180)
 	canvas.create_text(10,200,text="0")
+	mainloop()
 
+def greedy(ist):
+	starts,temp = risolvi(ist)
+	print(starts)
+	disegna(starts,temp)
+	input()
 
+def testo():
+	print("\n 3 ambulatori.\n")
 
 if __name__ == "__main__":
+
+	# Gestione della configurazione
+	global ist,conf
+	if (not isfile("config.ini")):
+		conf = config.genConfig()
+	else:
+		conf = config.loadConfig()
+	
+	print(conf)
+
+	# Menù contestuale
+
+	test = """
+
+	             ______                     _   _              _ _                
+	             | ___ \                   | | | |            | (_)               
+	             | |_/ / __ ___   __ _  ___| |_| |_ ___     __| |_                
+	             |  __/ '__/ _ \ / _` |/ _ \ __| __/ _ \   / _` | |               
+	             | |  | | | (_) | (_| |  __/ |_| || (_) | | (_| | |               
+	             \_|  |_|  \___/ \__, |\___|\__|\__\___/   \__,_|_|               
+	                              __/ |                                           
+	                             |___/                                            
+	______ _                          _____                      _   _            
+	| ___ (_)                        |  _  |                    | | (_)           
+	| |_/ /_  ___ ___ _ __ ___ __ _  | | | |_ __   ___ _ __ __ _| |_ ___   ____ _ 
+	|    /| |/ __/ _ \ '__/ __/ _` | | | | | '_ \ / _ \ '__/ _` | __| \ \ / / _` |
+	| |\ \| | (_|  __/ | | (_| (_| | \ \_/ / |_) |  __/ | | (_| | |_| |\ V / (_| |
+	\_| \_|_|\___\___|_|  \___\__,_|  \___/| .__/ \___|_|  \__,_|\__|_| \_/ \__,_|
+	                                       | |                                    
+	                                       |_|                                    \n\n"""
+	for char in test:
+		sys.stdout.write(char)
+		sys.stdout.flush()
+		sleep(0.0004)
+	sleep(1.5)
+
+	scelta = {1:greedy,3:config.showConfig,4:config.changeConfig,5:sys.exit}
+	
+	while True:
+		flag = False
+		try:
+			risposta = int(input("\nSelezionare un'opzione:\n\n1) Algoritmo Greedy\n2) Simulated Annealing\n3) Stampa configurazione\n4) Altera configurazione\n5) Esci\n\n"))
+			print("")
+			if risposta < 1 or risposta > 6:
+				print("\nOpzione inesistente.\n\n")
+			else:
+				flag = True
+		except ValueError:
+			print("\nInput errato.\n\n")
+		
+		if flag:
+			if risposta in [5]:
+				scelta[risposta]()
+			elif risposta in [1,2]:
+				#ist = [[1], [2, 5], [1], [4], [1, 3, 2], [4, 5], [2, 3, 5], [1], [4, 3, 1], [4, 3], [4, 2], [3, 1], [5, 2], [1, 4, 5]] #Crea errore
+				ist = genIstanza(conf["Istanze"])
+				scelta[risposta](ist)
+			else:
+				scelta[risposta](conf)
+
 	#paziente = MCP(ist)
 	#ist = [[2, 4], [4, 2, 3], [5, 4]]
 	# Generazione istanza casuale
 	#ist = [[4, 1], [5], [2, 5], [3]]
 	#ist = [[4, 1], [2, 5, 4, 3], [4], [1, 4, 5], [3, 4, 5], [3, 5, 2], [3, 2], [1, 3, 5], [3, 4, 5], [5, 3, 2]]
 	#ist = genIstanza()
-	ist = [[1], [2, 5], [1], [4], [1, 3, 2], [4, 5], [2, 3, 5], [1], [4, 3, 1], [4, 3], [4, 2], [3, 1], [5, 2], [1, 4, 5]] #Crea errore
-	print(ist)
+	#print(ist)
 	#pprint(ist)
 	#paziente = MCP(ist)
 	#print(paziente)
-	starts,temp = risolvi(ist)
-	print(starts)
-	disegna(starts,temp)
-	input()

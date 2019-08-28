@@ -1,2 +1,5 @@
 # Non gestire queste cartelle
 __pycache__/
+
+# Non gestire le seguenti estensioni
+*.ini
