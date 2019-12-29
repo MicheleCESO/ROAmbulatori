@@ -44,7 +44,7 @@ def sa(statoIniziale,config,alpha):
 	while calore > 0:
 		calore = calore * alpha
 		stato = prescelto(statoIniziale)
-		print(stato)
+		# print(stato)
 		nuovaEnergia = energia(statoIniziale)
 		if nuovaEnergia <= vecchiaEnergia:
 			statoIniziale = stato
