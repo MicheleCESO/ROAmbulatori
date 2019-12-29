@@ -26,75 +26,77 @@ def risolvi(ist):
 
 	indiciUtilizzabili = [i for i in range(len(ist))] # Indici per capire quali pazienti scegliere
 
-	for _ in range(len(ist)):
-		index = 0
-		minimoConflitto = 999
-		minimo = minStato(statoStanze)
-
+	for _ in ist:#range(len(ist)): # Per ogni paziente
+		minimo = statoStanze.index(min(statoStanze))
+		print("**** ",minimo)
 		cancellaPazienti(listaPazienti,statoStanze,minimo,gestionePazienti)
 
+		# Inizializzazione delle variabili
+		index = 0
+		minimoConflitto = 999
 		flag = True
 
+		# Ciclo che sceglie il paziente tra quelli disponibili che genera meno conflitti
 		while flag and index < len(ist):
+			print(flag,index)
 			if index in indiciUtilizzabili:
 				conflitto, soluzione = confronto(ist,startJ,listaPazienti,index,statoStanze[minimo]) # Confrontiamo paziente scelto attuale con quelli precedentemente scelti
 			
+				# Se trovo un paziente che genera meno conflitto, lo tengo da parte
 				if conflitto < minimoConflitto:
 					minimoConflitto = conflitto
 					indexSol = index
 					sol = soluzione
-				if conflitto == 0:
-					flag = False
-			index += 1
+					if conflitto == 0: # Se non c'è conflitto, non posso trovare elemento migliore, quindi esco dal ciclo
+						flag = False
+						print("falso")
+					else:
+						index += 1
+				else:
+					index += 1
+			else:
+				index += 1
 
 		# Inserimento in ambulatorio
 		listaPazienti.append(indexSol)
-		print(indexSol,sol,indexSol-1,"\n",ist)
-		ist[indexSol] = sol
+		#print(indexSol,sol,indexSol-1,"\n",ist)
+		ist[indexSol] = sol # Nuovo arrangiamento degli esami del paziente
 		gestionePazienti[minimo] = indexSol
 		storicoPazienti[indexSol] = minimo
 		indiciUtilizzabili.remove(indexSol) # Cancello elemento già estratto
 
 		# Aggiornamento ambulatorio
 		statoStanze[minimo] += conflitto
-		for elm in ist[index-1]:
+		for elm in ist[indexSol]:
 			statoStanze[minimo] += pi[elm-1]
 	return startJ,storicoPazienti
 
 # Cancella i pazienti che escono dagli ambulatori
-def cancellaPazienti(listaPazienti,ambulatori,minimo,collegamento):
-	#for elm in minimo[::-1]:
-	if ambulatori[minimo] > 0:
+def cancellaPazienti(listaPazienti,ambulatori,indexAmb,collegamento):
+	if ambulatori[indexAmb] > 0:
 		print("\n**** {} **** {}\n".format(listaPazienti,collegamento))
-		listaPazienti.remove(collegamento[minimo])
-
-# Ritorna gli indici con i valori minimi della lista
-def minStato(lista):
-	minimo = 9999
-	for i in range(3):
-		if minimo > lista[i]:
-			minimo = lista[i]
-			index = i
-	return index
+		listaPazienti.remove(collegamento[indexAmb])
 
 # Gestisce il confronto tra i pazienti già inseriti e uno nuovo
 def confronto(istanza, startJobs, pazientiInAmbulatorio, nuovoPaziente, startNuovo):
 
 	global pi
 
-	# Permutazioni possibili del nuovo paziente	
-	lista3 = permuta(istanza[nuovoPaziente])
 	if len(pazientiInAmbulatorio) == 0:
 		
 		# Genero gli start momentanei del nuovo paziente
 		startScorr = startNuovo
 		for elm in istanza[nuovoPaziente]:
 			startJobs[nuovoPaziente][elm] = startScorr
-			startScorr += pi[elm-1] # Aggiorno lo start
-
+			startScorr += pi[elm-1]
+		
+		# Ritorno direttamente la parte dell'istanza relativa al paziente, siccome non ci sono altri pazienti negli ambulatori.
 		return 0,istanza[nuovoPaziente]
-	
-	elif len(pazientiInAmbulatorio) == 1:
+
+	# Permutazioni possibili del nuovo paziente	
+	lista3 = permuta(istanza[nuovoPaziente])
+
+	if len(pazientiInAmbulatorio) == 1:
 		lista2 = None
 		start2 = None
 	else:
