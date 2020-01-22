@@ -190,7 +190,7 @@ def disegna(dati,indiciAmbulatori):
 
 def greedy(ist):
 	starts,temp = risolvi(ist)
-	print(starts)
+	print(starts,"----",temp)
 	disegna(starts,temp)
 	input()
 

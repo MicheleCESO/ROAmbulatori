@@ -36,15 +36,17 @@ def energia(stato):
 # Simulated Annealing
 def sa(statoIniziale,config,alpha):
 
-	raffreddamento = config["Temperatura"] / config["Iterazioni"]
+	raffr = config["Temperatura"] / config["Iterazioni"]
 	calore = config["Temperatura"]
+
+	iter = 0
 
 	vecchiaEnergia = energia(statoIniziale)
 
-	while calore > 0:
+	while calore > 0 and iter < config["Iterazioni"]:
 		calore = calore * alpha
 		stato = prescelto(statoIniziale)
-		# print(stato)
+
 		nuovaEnergia = energia(statoIniziale)
 		if nuovaEnergia <= vecchiaEnergia:
 			statoIniziale = stato
@@ -53,17 +55,19 @@ def sa(statoIniziale,config,alpha):
 			statoIniziale = stato
 			vecchiaEnergia = nuovaEnergia
 
-	#	calore -= raffreddamento
-
 		if vecchiaEnergia == 0:
-			return statoIniziale
-	return [statoIniziale,vecchiaEnergia]
+			return [statoIniziale, True]
+		iter += 1
+	return [statoIniziale, False]
 
 if __name__ == "__main__":
 	statoIniziale = [1,2,3,4,5,6,7,8,0]
 	shuffle(statoIniziale)
 	print("Situazione iniziale: {}\n".format(statoIniziale))
-	c = {"Temperatura":2,"Iterazioni":20000}
+	c = {"Temperatura":2,"Iterazioni":200000}
 
 	res = sa(statoIniziale,c,0.99)
-	print(res[0],res[1])
+	while not res[1]:
+		print(res[0],"Rifaccio....")
+		res = sa(res[0],c,0.99)
+	print(res)
