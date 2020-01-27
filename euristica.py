@@ -6,33 +6,33 @@ from disegno import disegna
 def euri(ist, durata):
 	offset = [0,0,0]
 
-	jobs = {} # Struttura contenente informazioni sui lavori di tutti i pazienti
+	pazienti = {} # Struttura contenente informazioni sui lavori di tutti i pazienti
 	jobList = [[] for _ in range(5)] # Ogni sottolista contiene un elenco di start di un certo tipo di lavoro.
 									 # Questi sono i lavori che sono stati assegnati agli ambulatori
 
 	i = 1
 	for paziente in ist:
-		jobs[i] = {}
+		pazienti[i] = {"jobs": {}}
 		idAmbulatorio = offset.index(min(offset))
-		jobs[i][0] = idAmbulatorio
+		pazienti[i]["ambulatorio"] = idAmbulatorio
 		print("\n")
 		for idJob in paziente:
-			jobs[i][idJob] = [] # Uso di liste per sfruttare il riferimento all'oggetto, permette un rapido aggiornamento dei parametri
+			pazienti[i]["jobs"][idJob] = [] # Uso di liste per sfruttare il riferimento all'oggetto, permette un rapido aggiornamento dei parametri
 
-			nuovoOffset = addJob(jobs[i][idJob], jobList[idJob - 1], offset[idAmbulatorio], durata[idJob])
+			nuovoOffset = addJob(pazienti[i]["jobs"][idJob], jobList[idJob - 1], offset[idAmbulatorio], durata[idJob])
 			print(offset[idAmbulatorio],"- -",nuovoOffset)
 			offset[idAmbulatorio] = nuovoOffset
+		pazienti[i]["start"] = min(list(pazienti[i]["jobs"].values()))[0] # Salvataggio del parametro start paziente
 		i += 1
-	return jobs
+	return pazienti
 
 def addJob(job, jobList, offset, durata):
-	print("-->",offset)
 	allarme = False
 	if len(jobList) > 0:
 		index = 0
 		spazioNonTrovato = True
 		while index < len(jobList) and spazioNonTrovato:
-			[nuovoOffset, allarme] = rightObserver(offset, durata, jobList[index][0], allarme)  # Aggiunta dell'indice zero per accedere al valore nella lista
+			[nuovoOffset, allarme] = controlloProssimoJob(offset, durata, jobList[index][0], allarme)  # Aggiunta dell'indice zero per accedere al valore nella lista
 																			# contenente il singolo valore.
 			
 			if offset == nuovoOffset: # Se gli offset coincidono significa che il job ci sta e termino, altrimenti tento con il job successivo
@@ -43,7 +43,6 @@ def addJob(job, jobList, offset, durata):
 			else:
 				offset = nuovoOffset
 				index += 1
-	print("---->",offset)
 	jobList.append(job) # Inseriamo il job nella lista di supporto come lista, così il valore viene automaticamente aggiornato
 	job.append(offset) # Append perchè il valore usa una lista come incapsulamento
 	jobList.sort() # Riordino dei job in senso crescente
@@ -52,8 +51,7 @@ def addJob(job, jobList, offset, durata):
 
 # Allarme rimane false fintanto che analizzo job che finiscono prima che incominci quello attuale, al primo job con cui ha conflitto, si setta
 # a true. La prossima volta che non trova conflitto, significa che trova il posto in cui inserirsi
-def rightObserver(offset, durata, startJob, allarme):
-	print(offset,durata,startJob)
+def controlloProssimoJob(offset, durata, startJob, allarme):
 	if offset + durata > startJob and startJob + durata > offset: # Condizione di conflitto
 		return [startJob + durata, True] # Offset posizionato alla fine del task a destra
 	else:
@@ -61,6 +59,12 @@ def rightObserver(offset, durata, startJob, allarme):
 			return [offset, True]
 		else: # Il job in analisi è da ignorare in quanto è già terminato all'istante segnato da offset
 			return [offset, allarme]
+
+def printt(istanza):
+	print("\nPazienti:\n########\n")
+	for e,v in istanza.items():
+		print(e,v)
+	print("\n########")
 
 if __name__ == "__main__":
 	# Gestione della configurazione
@@ -74,5 +78,5 @@ if __name__ == "__main__":
 	print(ist,"\n\n")
 	durata = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
 	jobs = euri(ist, durata)
-	print(jobs)
+	printt(jobs)
 	disegna(jobs,durata)

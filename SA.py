@@ -1,6 +1,42 @@
 from math import exp		# Per l'esponenziale e
 from random import uniform	# Per generare numeri pseudocasuali (0,1)
-from random import shuffle,randint
+from random import shuffle,randint,choice
+
+# Funzione per generare un vicino da confrontare con lo stato attuale.
+# 1 - selezione pseudocasuale di due pazienti diversi.
+
+def mossa(statoIniziale, statoLavori, statoAmbulatori):
+	paziente1, paziente2 = sceltaSwapPazienti(statoIniziale, statoAmbulatori) # 1
+
+	startp2 = paziente1["start"] #
+	startp1 = paziente2["start"] # 2
+
+	compattaAmbulatorio(statoAmbulatori[paziente1["ambulatorio"]], statoAmbulatori[paziente1["ambulatorio"]].index(paziente1))
+
+def compattaAmbulatorio(listaPazienti, index):
+
+	for paziente in range(index):
+		listaPazienti[paziente]["volatile"] = False
+
+
+# Scelta di due pazienti sempre diversi
+def sceltaSwapPazienti(stato, ambulatori):
+	p1 = choice(list(stato))
+	p2 = choice(list(stato))
+	p1 = 1
+	p2 = 2
+	while p1 == p2:
+		p2 = choice(list(stato))
+	swapPazienti(stato, p1, p2)
+	print("stato: ",stato[p1])
+	return stato[p1],stato[p2]
+
+# Esecuzione dello swap tra pazienti
+def swapPazienti(stato, paziente1, paziente2):
+	temp = stato[paziente1]
+	stato[paziente1] = stato[paziente2]
+	stato[paziente2] = temp
+
 # Funzione per generare un vicino da confrontare con lo stato attuale
 def prescelto(statoIniziale):
 	index = statoIniziale.index(0)
