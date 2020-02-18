@@ -6,7 +6,7 @@ def disegna(dati, pi):
 	scala = 30
 	offset = 10
 	altezza = 50
-	i = 0
+	i = 1
 
 	# Inizializzazione finestra grafica
 	root = Tk()

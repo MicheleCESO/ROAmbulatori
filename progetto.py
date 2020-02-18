@@ -6,7 +6,7 @@ from os.path import isfile						# Controllo presenza file
 from itertools import permutations as perm 		# Per gestire le permutazioni
 from tkinter import *							# Per la grafica
 
-pi = [1,2,3,4,5]
+pi = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
 
 def permuta(lista):
 	return list(perm(lista))

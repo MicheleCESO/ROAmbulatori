@@ -1,5 +1,6 @@
 import configparser
 
+conf=None
 # Funzione per generare un file di configurazione nel caso manchi.
 def genConfig():
 	config = configparser.ConfigParser()
@@ -28,7 +29,7 @@ def genConfig():
 	# Scrittura del file
 	with open("config.ini","w") as configfile:
 		config.write(configfile)
-	
+	conf = dicti
 	return dicti
 
 # Funzione per caricare un file di configurazione.
