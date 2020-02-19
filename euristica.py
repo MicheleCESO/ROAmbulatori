@@ -87,7 +87,9 @@ if __name__ == "__main__":
 	#print(ambulatori)
 
 	disegna(pazienti, durata)
-	for _ in range(100000):
-		SA.mossa(pazienti, jobs, ambulatori)
+	c = {"Temperatura":0.5,"Iterazioni":10000}
+	#for _ in range(4):
+		#SA.mossa(pazienti, jobs, ambulatori)
+	res = SA.sa(pazienti, jobs, ambulatori, c, 0.99)
 		#printt(pazienti)
 	disegna(pazienti, durata)

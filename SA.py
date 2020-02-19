@@ -3,6 +3,7 @@ from random import uniform	# Per generare numeri pseudocasuali (0,1)
 from random import shuffle,randint,choice
 from progetto import pi
 from disegno import disegna
+from copy import deepcopy
 
 vi = 0
 scell=[[5,8],[14,13],[2,4],[13,15]]
@@ -11,6 +12,7 @@ scell=[[5,8],[14,13],[2,4],[13,15]]
 # 1 - selezione pseudocasuale di due pazienti diversi.
 # 2 - selezione dello start minimo, che comporta una compattazione nei 3 ambulatori (dallo start minimo fino al punto più lontano)
 def mossa(statoIniziale, statoLavori, statoAmbulatori):
+	statoIniziale_copia, statoLavori_copia, statoAmbulatori_copia = deepcopy([statoIniziale, statoLavori, statoAmbulatori])
 	paziente1, paziente2 = sceltaSwapPazienti(statoIniziale, statoAmbulatori) # 1
 
 	startMin = min(list(paziente1["jobs"].values()) + list(paziente2["jobs"].values()))[0]
@@ -22,6 +24,8 @@ def mossa(statoIniziale, statoLavori, statoAmbulatori):
 	
 	controlloConflitto(statoIniziale, indici, statoLavori, statoAmbulatori)
 
+	return [statoIniziale_copia, statoLavori_copia, statoAmbulatori_copia]
+
 # Questa funzione controlla se ci sono conflitti tra i vari pazienti e li risolve spostandoli
 def controlloConflitto(statoIniziale, indici, statoLavori, statoAmbulatori):
 	ind = [0, 1, 2] # Indici degli ambulatori che contengono ancora pazienti da controllare
@@ -30,7 +34,6 @@ def controlloConflitto(statoIniziale, indici, statoLavori, statoAmbulatori):
 	candidati = {i: min(statoAmbulatori[i][indici[i]]["jobs"].values()) for i in ind} # Crea un dizionario contenente gli start minimi dei pazienti interessati
 	while len(candidati) > 0: # Fintanto che ci sono ambulatori con pazienti da controllare
 		minPaziente = min(candidati, key=candidati.get) # Indice del paziente che parte prima degli altri
-
 		spostamento[minPaziente] = risolviConflitto(statoIniziale, statoAmbulatori[minPaziente][indici[minPaziente]], statoLavori, spostamento[minPaziente])
 
 		if indici[minPaziente] == len(statoAmbulatori[minPaziente]) - 1: # Significa che è stato osservato l'ultimo paziente dell'ambulatorio
@@ -165,64 +168,45 @@ def swapPazienti(ambulatori, paziente1, paziente2):
 	paziente1["start"] = paziente2["start"]
 	paziente2["start"] = tempStart
 
-# Funzione per generare un vicino da confrontare con lo stato attuale
-def prescelto(statoIniziale):
-	index = statoIniziale.index(0)
-	mosse = {
-				0:[1,3],
-				1:[0,2,4],
-				2:[1,5],
-				3:[0,4,6],
-				4:[1,3,5,7],
-				5:[2,4,8],
-				6:[3,7],
-				7:[4,6,8],
-				8:[5,7]
-	}
-
-	indexToSwap = randint(0,len(mosse[index])-1)
-	statoIniziale[index] = statoIniziale[mosse[index][indexToSwap]]
-	statoIniziale[mosse[index][indexToSwap]] = 0
-	return statoIniziale
-
 # Funzione per calcolare l'energia di uno stato
-def energia(stato):
-	i = 0
-	energia = 0
-	for element in stato:
-		if element != i+1:
-			energia += 1
-		i += 1
-	if stato[-1] == 0:
-		energia -= 1
-	return energia
+def energia(ambulatori):
+	sogliaMax = max([max(ambulatori[i][-1]["jobs"], key=ambulatori[i][-1]["jobs"].get) for i in range(3)])
+
+	Etot = 0
+
+	for i in range(3):
+		energiaFinale = sogliaMax
+		for paziente in ambulatori[i]:
+			for job in paziente["jobs"]:
+				energiaFinale -= pi[job]
+		Etot += energiaFinale
+	return Etot
 
 # Simulated Annealing
-def sa(statoIniziale,config,alpha):
+def sa(statoIniziale, jobs, ambulatori, config, alpha):
 
 	raffr = config["Temperatura"] / config["Iterazioni"]
 	calore = config["Temperatura"]
 
-	iter = 0
+	itera = 0
 
-	vecchiaEnergia = energia(statoIniziale)
+	vecchiaEnergia = energia(ambulatori)
 
-	while calore > 0 and iter < config["Iterazioni"]:
+	while itera < config["Iterazioni"]:
+		print(itera)
 		calore = calore * alpha
-		stato = prescelto(statoIniziale)
+		statoIniziale_vecchio, jobs_vecchio, ambulatori_vecchio = mossa(statoIniziale, jobs, ambulatori)
 
-		nuovaEnergia = energia(statoIniziale)
-		if nuovaEnergia <= vecchiaEnergia:
-			statoIniziale = stato
+		nuovaEnergia = energia(ambulatori)
+		# Se la soluzione nuova è migliore o nonostante sia peggiore, viene deciso di mantenerla
+		if nuovaEnergia <= vecchiaEnergia or exp(-(nuovaEnergia - vecchiaEnergia)/calore) > uniform(0,1):
 			vecchiaEnergia = nuovaEnergia
-		elif exp(-(nuovaEnergia - vecchiaEnergia)/calore) > uniform(0,1):
-			statoIniziale = stato
-			vecchiaEnergia = nuovaEnergia
-
-		if vecchiaEnergia == 0:
-			return [statoIniziale, True]
-		iter += 1
-	return [statoIniziale, False]
+		else:
+			statoIniziale = statoIniziale_vecchio
+			jobs = jobs_vecchio
+			ambulatori = ambulatori_vecchio
+		itera += 1
+	return statoIniziale
 
 if __name__ == "__main__":
 	statoIniziale = [1,2,3,4,5,6,7,8,0]
@@ -231,7 +215,5 @@ if __name__ == "__main__":
 	c = {"Temperatura":2,"Iterazioni":200000}
 
 	res = sa(statoIniziale,c,0.99)
-	while not res[1]:
-		print(res[0],"Rifaccio....")
-		res = sa(res[0],c,0.99)
+	
 	print(res)
