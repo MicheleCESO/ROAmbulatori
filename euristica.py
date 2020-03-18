@@ -69,7 +69,7 @@ def printt(istanza):
 		print(e,v)
 	print("\n########")
 
-if __name__ == "__main__":
+def main():
 	# Gestione della configurazione
 	global ist,conf
 	if (not isfile("config.ini")):
@@ -93,3 +93,6 @@ if __name__ == "__main__":
 	res = SA.sa(pazienti, jobs, ambulatori, c, 0.99)
 		#printt(pazienti)
 	disegna(pazienti, durata)
+
+if __name__ == "__main__":
+	main()
