@@ -170,8 +170,8 @@ def swapPazienti(ambulatori, paziente1, paziente2):
 
 # Funzione per calcolare l'energia di uno stato
 def energia(ambulatori):
-	sogliaMax = max([max(ambulatori[i][-1]["jobs"], key=ambulatori[i][-1]["jobs"].get) for i in range(3)])
-
+	tipoJob, sogliaStart = max([max(ambulatori[i][-1]["jobs"].items(), key=lambda k: k[1][0]) for i in range(3)], key=lambda k: k[1][0] + pi[k[0]])
+	sogliaMax = sogliaStart[0] + pi[tipoJob]
 	Etot = 0
 
 	for i in range(3):
