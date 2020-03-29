@@ -69,7 +69,7 @@ def printt(istanza):
 		print(e,v)
 	print("\n########")
 
-def main():
+def main(app=None):
 	# Gestione della configurazione
 	global ist,conf
 	if (not isfile("config.ini")):
@@ -85,12 +85,11 @@ def main():
 	printt(pazienti)
 	#print(jobs)
 	#print(ambulatori)
-
 	disegna(pazienti, durata)
-	c = {"Temperatura":0.5,"Iterazioni":10000}
+	c = {"Temperatura":2000,"Iterazioni":100000}
 	#for _ in range(4):
 		#SA.mossa(pazienti, jobs, ambulatori)
-	res = SA.sa(pazienti, jobs, ambulatori, c, 0.99)
+	res = SA.sa(pazienti, jobs, ambulatori, c, 0.99, app)
 		#printt(pazienti)
 	disegna(pazienti, durata)
 

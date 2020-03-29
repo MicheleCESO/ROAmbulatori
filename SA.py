@@ -5,17 +5,14 @@ from progetto import pi
 from disegno import disegna
 from copy import deepcopy
 
-vi = 0
-scell=[[5,8],[14,13],[2,4],[13,15]]
-
 # Funzione per generare un vicino da confrontare con lo stato attuale:
 # 1 - selezione pseudocasuale di due pazienti diversi.
 # 2 - selezione dello start minimo, che comporta una compattazione nei 3 ambulatori (dallo start minimo fino al punto più lontano)
 def mossa(statoIniziale, statoLavori, statoAmbulatori):
-	statoIniziale_copia, statoLavori_copia, statoAmbulatori_copia = deepcopy([statoIniziale, statoLavori, statoAmbulatori])
+	statoIniziale_copia, statoLavori_copia, statoAmbulatori_copia = deepcopy([statoIniziale, statoLavori, statoAmbulatori]) # Copia dello stato attuale
 	paziente1, paziente2 = sceltaSwapPazienti(statoIniziale, statoAmbulatori) # 1
 
-	startMin = min(list(paziente1["jobs"].values()) + list(paziente2["jobs"].values()))[0]
+	startMin = min(list(paziente1["jobs"].values()) + list(paziente2["jobs"].values()))[0] # 2
 
 	# Compattamento degli ambulatori nell'area che inizia con lo start minimo dei pazienti scambiati
 	indici = [0,0,0] # Indici dei pazienti da cui partire per verificare i conflitti
@@ -170,8 +167,8 @@ def swapPazienti(ambulatori, paziente1, paziente2):
 
 # Funzione per calcolare l'energia di uno stato
 def energia(ambulatori):
-	sogliaMax = max([max(ambulatori[i][-1]["jobs"], key=ambulatori[i][-1]["jobs"].get) for i in range(3)])
-
+	tipoJob, sogliaStart = max([max(ambulatori[i][-1]["jobs"].items(), key=lambda k: k[1][0]) for i in range(3)], key=lambda k: k[1][0] + pi[k[0]])
+	sogliaMax = sogliaStart[0] + pi[tipoJob]
 	Etot = 0
 
 	for i in range(3):
@@ -183,20 +180,22 @@ def energia(ambulatori):
 	return Etot
 
 # Simulated Annealing
-def sa(statoIniziale, jobs, ambulatori, config, alpha):
+def sa(statoIniziale, jobs, ambulatori, config, alpha, mainWindow=None):
 
 	raffr = config["Temperatura"] / config["Iterazioni"]
 	calore = config["Temperatura"]
 
-	itera = 0
+	itera = 1
 
 	vecchiaEnergia = energia(ambulatori)
+	if mainWindow is not None:
+		mainWindow.temperatura.setNum(calore)
+		mainWindow.delta.setNum(calore)
+		mainWindow.app.processEvents()
 
-	while itera < config["Iterazioni"]:
-		print(itera)
+	while itera <= config["Iterazioni"] and mainWindow.running:
 		calore = calore * alpha
 		statoIniziale_vecchio, jobs_vecchio, ambulatori_vecchio = mossa(statoIniziale, jobs, ambulatori)
-
 		nuovaEnergia = energia(ambulatori)
 		# Se la soluzione nuova è migliore o nonostante sia peggiore, viene deciso di mantenerla
 		if nuovaEnergia <= vecchiaEnergia or exp(-(nuovaEnergia - vecchiaEnergia)/calore) > uniform(0,1):
@@ -205,6 +204,12 @@ def sa(statoIniziale, jobs, ambulatori, config, alpha):
 			statoIniziale = statoIniziale_vecchio
 			jobs = jobs_vecchio
 			ambulatori = ambulatori_vecchio
+		if mainWindow is not None:
+			mainWindow.temperatura.setNum(calore)
+			mainWindow.delta.setNum(calore)
+			mainWindow.progressBar.setValue((itera / config["Iterazioni"]) * 100)
+			mainWindow.progressBarLabel.setText("{:.2%}".format(itera / config["Iterazioni"])+ " %")
+			mainWindow.app.processEvents()
 		itera += 1
 	return statoIniziale
 

@@ -6,9 +6,10 @@ import euristica
 
 class MainWindow(QtWidgets.QMainWindow):
 
-	def __init__(self, *args, **kwargs):
+	def __init__(self, app, *args, **kwargs):
 		super(MainWindow, self).__init__(*args, **kwargs)
-		uic.loadUi("GUI.ui", self)
+		self.app = app
+		uic.loadUi("GUI2.ui", self)
 		color = self.palette().color(QtGui.QPalette.Window)
 		self.graphWidget.setBackground("g")
 		self.graphWidget.setLabel('left', "Energia", **{"color":"magenta","font-size":"10pt"})
@@ -18,11 +19,14 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.graphWidget.setYRange(0, 60, padding=0)
 		self.pen = pg.mkPen(color=(255,0,0), width=1, style=QtCore.Qt.DotLine)
 		self.ref = self.graphWidget.plot(pen=self.pen)
-		self.start.clicked.connect(euristica.main)
+		self.start.clicked.connect(lambda: euristica.main(self))
 		self.stop.clicked.connect(self.resetGrafico)
 		self.x = []
 		self.y = []
 		self.running = True
+		#self.statusbar.showMessage("Ready")
+		self.statusBar().addPermanentWidget(self.boxBar)
+		self.minimoPazienti.setText("100")
 	
 	def resetGrafico(self):
 		self.ref.clear()
@@ -64,10 +68,10 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.x.append(100-len(self.x))
 		self.y.append(randint(2,50))
 		self.ref.setData(self.x,self.y)
-		self.Temperatura.setNum(100-len(self.x))
+		self.temperatura.setNum(100-len(self.x))
 		
-		self.widget.update()
-		app.processEvents()
+		#self.widget.update()
+		self.app.processEvents()
 		#self.graphWidget.plot([1,2,3,4,5,6,7,8,9,10],[30,32,34,32,33,31,29,32,35,45], pen=pen)
 
 	def closeEvent(self, e):
@@ -88,7 +92,6 @@ class Widget(QtGui.QWidget):
 
 			painter.drawRect(100, 0,100,100)
 		else:
-			print("hello")
 			painter = QtGui.QPainter(self)
 			painter.eraseRect(0,0,1000,1000)
 
@@ -98,10 +101,9 @@ class Widget(QtGui.QWidget):
 		self.update()
 		
 def main():
-	global app
+	
 	app = QtWidgets.QApplication(sys.argv)
-	print("cacca")
-	main = MainWindow()
+	main = MainWindow(app)
 	main.show()
 	sys.exit(app.exec_())
 
