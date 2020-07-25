@@ -1,22 +1,18 @@
 import sys										# Funzioni di sistema
-import getopt
+import argparse
 from time import sleep							# Per ritardare l'output
 from IstGen import genIstanza					# Generatore di istanze
 import config									# Gestisce la configurazione del programma
 from os.path import isfile						# Controllo presenza file
 from tkinter import *							# Per la grafica
 from config import Config, NoGuiConfig
+import SA
+from euristica import euri
+from disegno import disegna
 
 pi = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
 
-def main(argv):
-	for arg in argv:
-		print(arg)
-	optlist, args = getopt.getopt(argv, "hn", ["nogui"])
-	print(optlist)
-
-def test():
-	global ist,conf
+def main():
 	# Configurazione
 	conf = NoGuiConfig()
 	
@@ -46,7 +42,7 @@ def test():
 		sleep(0.0001)
 	sleep(1.5)
 
-	scelta = {2:conf.mostra,3:conf.modifica,4:sys.exit}
+	scelta = {1:start, 2:conf.mostra, 3:conf.modifica, 4:sys.exit}
 	
 	while True:
 		flag = False
@@ -61,15 +57,35 @@ def test():
 			print("\nInput errato.\n\n")
 		
 		if flag:
-			if risposta in [5]:
-				scelta[risposta]()
-			elif risposta == 1:
-				#ist = [[1], [2, 5], [1], [4], [1, 3, 2], [4, 5], [2, 3, 5], [1], [4, 3, 1], [4, 3], [4, 2], [3, 1], [5, 2], [1, 4, 5]] #Crea errore
-				ist = genIstanza(conf["Istanze"])
-				scelta[risposta](ist)
+			if risposta == 1:
+				scelta[risposta](conf)
 			else:
 				scelta[risposta]()
 
+def start(conf):
+	ist = genIstanza(conf)
+	ist = [[5], [5], [2, 4, 5, 1], [3], [5, 2], [4], [5, 2], [2, 3, 1, 5], [2], [1], [5, 3, 1], [5], [1, 4], [4], [1, 2, 3]]
+	
+	durata = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
+	pazienti, jobs, ambulatori = euri(ist, durata)
+	disegna(pazienti, durata)
+	
+	res = SA.sa(pazienti, jobs, ambulatori, conf)
+	
+	disegna(pazienti, durata)
+	
 if __name__ == "__main__":
-	test()
-	#main(sys.argv[1:])
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-g", "--grafica", action="store_true", help="utilizzo di interfaccia grafica")
+	args = parser.parse_args() # Parsing degli argomenti
+	if args.grafica:
+		# Configurazione
+		conf = Config()
+		from grafica import MainWindow
+		from PyQt5 import QtWidgets
+		app = QtWidgets.QApplication(sys.argv)
+		main = MainWindow(app, conf)
+		main.show()
+		sys.exit(app.exec_())
+	else:
+		main()

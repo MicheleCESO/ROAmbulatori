@@ -167,48 +167,159 @@ def swapPazienti(ambulatori, paziente1, paziente2):
 
 # Funzione per calcolare l'energia di uno stato
 def energia(ambulatori):
-	tipoJob, sogliaStart = max([max(ambulatori[i][-1]["jobs"].items(), key=lambda k: k[1][0]) for i in range(3)], key=lambda k: k[1][0] + pi[k[0]])
+	test = [max(ambulatori[i][-1]["jobs"].items(), key=lambda k: k[1][0]) for i in range(3)] # Crea una lista contenente l'ultimo job di ogni ambulatorio
+	tipoJob, sogliaStart = max(test, key=lambda k: k[1][0] + pi[k[0]]) # Restituisce due elementi: il tipo di job ed il suo start
 	sogliaMax = sogliaStart[0] + pi[tipoJob]
-	Etot = 0
 
-	for i in range(3):
+	Etot = 0 # Spazio idle totale
+
+	efficienza = []
+
+	for i in range(3): # Per ogni ambulatorio
 		energiaFinale = sogliaMax
-		for paziente in ambulatori[i]:
-			for job in paziente["jobs"]:
+		for paziente in ambulatori[i]: # Per ogni paziente
+			for job in paziente["jobs"]: # Per ogni job
 				energiaFinale -= pi[job]
+		efficienza.append((sogliaMax - energiaFinale) / sogliaMax) # Calcolo dell'efficienza di un ambulatorio
+		print(sogliaMax - energiaFinale,sogliaMax,energiaFinale)
 		Etot += energiaFinale
-	return Etot
+	return Etot, efficienza, sogliaMax
 
 # Simulated Annealing
-def sa(statoIniziale, jobs, ambulatori, config, alpha, mainWindow=None):
+def saGraph(statoIniziale, jobs, ambulatori, conf, mainWindow):
+	print(ambulatori)
+	itera = 0
+	calore = conf.temperatura
+	counterDelta = 1
 
-	raffr = config["Temperatura"] / config["Iterazioni"]
-	calore = config["Temperatura"]
+	vecchiaEnergia, efficienza, sogliaMassima = energia(ambulatori)
 
-	itera = 1
+	mainWindow.resetGrafico()
+	mainWindow.start.setEnabled(False) # Disattivazione tasto start
 
-	vecchiaEnergia = energia(ambulatori)
-	if mainWindow is not None:
-		mainWindow.temperatura.setNum(calore)
-		mainWindow.delta.setNum(calore)
-		mainWindow.app.processEvents()
+	mainWindow.widget.creaOggetti(statoIniziale, sogliaMassima)
+	mainWindow.widgetSolIniziale.creaOggetti(statoIniziale, sogliaMassima)
+	
+	mainWindow.valoreTemperatura.setNum(calore)
+	
+	mainWindow.maxE.setNum(vecchiaEnergia)
+	mainWindow.minE.setNum(vecchiaEnergia)
+	mainWindow.energiaSol.setNum(vecchiaEnergia)
+	mainWindow.energiaIniziale.setNum(vecchiaEnergia)
+	maxE = vecchiaEnergia
+	minE = vecchiaEnergia
+	
+	# Parametri di efficienza ambulatori
+	mainWindow.efficienza1.setText("{:.2%}".format(efficienza[0]))
+	mainWindow.efficienza2.setText("{:.2%}".format(efficienza[1]))
+	mainWindow.efficienza3.setText("{:.2%}".format(efficienza[2]))
+	mainWindow.efficienzaMedia.setText("{:.2%}".format((efficienza[0] + efficienza[1] + efficienza[2]) / 3))
+	
+	mainWindow.efficienza1Iniziale.setText("{:.2%}".format(efficienza[0]))
+	mainWindow.efficienza2Iniziale.setText("{:.2%}".format(efficienza[1]))
+	mainWindow.efficienza3Iniziale.setText("{:.2%}".format(efficienza[2]))
+	mainWindow.efficienzaMediaIniziale.setText("{:.2%}".format((efficienza[0] + efficienza[1] + efficienza[2]) / 3))
+	mainWindow.app.processEvents()
 
-	while itera <= config["Iterazioni"] and mainWindow.running:
-		calore = calore * alpha
+	running = [mainWindow.running]
+
+	while itera < conf.iterazioni:# and mainWindow.running:
+		calore = calore * conf.tassoRaffreddamento
 		statoIniziale_vecchio, jobs_vecchio, ambulatori_vecchio = mossa(statoIniziale, jobs, ambulatori)
-		nuovaEnergia = energia(ambulatori)
-		# Se la soluzione nuova è migliore o nonostante sia peggiore, viene deciso di mantenerla
-		if nuovaEnergia <= vecchiaEnergia or exp(-(nuovaEnergia - vecchiaEnergia)/calore) > uniform(0,1):
+		nuovaEnergia, efficienza, sogliaMassima = energia(ambulatori)
+		
+		delta = nuovaEnergia - vecchiaEnergia
+		# Se la soluzione nuova è migliore o nonostante sia peggiore (non uguale), viene deciso di mantenerla
+		if nuovaEnergia < vecchiaEnergia or exp(-(delta)/calore) > uniform(0,1) and delta != 0:
+			mainWindow.energiaSol.setNum(nuovaEnergia)
 			vecchiaEnergia = nuovaEnergia
+			mainWindow.widget.creaOggetti(statoIniziale, sogliaMassima)
+			
+			# Aggiornamento efficienza
+			mainWindow.efficienza1.setText("{:.2%}".format(efficienza[0]))
+			mainWindow.efficienza2.setText("{:.2%}".format(efficienza[1]))
+			mainWindow.efficienza3.setText("{:.2%}".format(efficienza[2]))
+			mainWindow.efficienzaMedia.setText("{:.2%}".format((efficienza[0] + efficienza[1] + efficienza[2]) / 3))
 		else:
 			statoIniziale = statoIniziale_vecchio
 			jobs = jobs_vecchio
 			ambulatori = ambulatori_vecchio
+
+		mainWindow.valoreTemperatura.setNum(calore)
+
+
+		mainWindow.progressBar.setValue(((itera + 1) / conf.iterazioni) * 100)
+		mainWindow.progressBarLabel.setText("{:.2%}".format((itera + 1) / conf.iterazioni))
+		
+		if vecchiaEnergia > maxE:
+			mainWindow.maxE.setNum(vecchiaEnergia)
+			maxE = vecchiaEnergia
+		if vecchiaEnergia < minE:
+			mainWindow.minE.setNum(vecchiaEnergia)
+			minE = vecchiaEnergia
+		mainWindow.draw(conf.iterazioni - (itera + 1), vecchiaEnergia) # Disegno andamento energia
+		
+		mainWindow.app.processEvents()
+		itera += 1
+	return statoIniziale
+	
+def sa(statoIniziale, jobs, ambulatori, conf, mainWindow):
+
+	itera = 0
+	calore = conf.temperatura
+	solAccettata = None
+	counterDelta = 1
+	aggiornaEfficienza = 500 # Iterazioni che devono passsare per aggiornare l'efficienza
+
+
+	vecchiaEnergia = energia(ambulatori)
+	if mainWindow is not None:
+		mainWindow.resetGrafico()
+		mainWindow.start.setEnabled(False) # Disattivazione tasto start
+		
+		mainWindow.valoreTemperatura.setNum(calore)
+		
+		mainWindow.maxE.setNum(vecchiaEnergia)
+		mainWindow.minE.setNum(vecchiaEnergia)
+		maxE = vecchiaEnergia
+		minE = vecchiaEnergia
+		deltaSommatoria = 0
+		
+		mainWindow.app.processEvents()
+		running = [mainWindow.running]
+
+	while itera < conf.iterazioni:# and mainWindow.running:
+		calore = calore * conf.tassoRaffreddamento
+		statoIniziale_vecchio, jobs_vecchio, ambulatori_vecchio = mossa(statoIniziale, jobs, ambulatori)
+		nuovaEnergia = energia(ambulatori)
+		
+		# Se la soluzione nuova è migliore o nonostante sia peggiore, viene deciso di mantenerla
+		if nuovaEnergia <= vecchiaEnergia or exp(-(nuovaEnergia - vecchiaEnergia)/calore) > uniform(0,1):
+			vecchiaEnergia = nuovaEnergia
+			solAccettata = True
+		else:
+			statoIniziale = statoIniziale_vecchio
+			jobs = jobs_vecchio
+			ambulatori = ambulatori_vecchio
+			solAccettata = False
 		if mainWindow is not None:
-			mainWindow.temperatura.setNum(calore)
-			mainWindow.delta.setNum(calore)
-			mainWindow.progressBar.setValue((itera / config["Iterazioni"]) * 100)
-			mainWindow.progressBarLabel.setText("{:.2%}".format(itera / config["Iterazioni"])+ " %")
+			mainWindow.valoreTemperatura.setNum(calore)
+			if solAccettata:
+				deltaSommatoria += nuovaEnergia - vecchiaEnergia # Aggiornamento sommatoria per delta medio
+				mainWindow.delta.setNum(deltaSommatoria / counterDelta)
+				counterDelta += 1
+				print(nuovaEnergia, vecchiaEnergia, deltaSommatoria,counterDelta)
+			mainWindow.progressBar.setValue(((itera + 1) / conf.iterazioni) * 100)
+			mainWindow.progressBarLabel.setText("{:.2%}".format(itera / conf.iterazioni)+ " %")
+			
+			if vecchiaEnergia > maxE:
+				mainWindow.maxE.setNum(vecchiaEnergia)
+				maxE = vecchiaEnergia
+			if vecchiaEnergia < minE:
+				mainWindow.minE.setNum(vecchiaEnergia)
+				minE = vecchiaEnergia
+			mainWindow.draw(conf.iterazioni - (itera + 1), vecchiaEnergia) # Disegno andamento energia
+			
 			mainWindow.app.processEvents()
 		itera += 1
 	return statoIniziale

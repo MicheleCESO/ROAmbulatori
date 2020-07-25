@@ -43,19 +43,19 @@ class Config():
 			self.genera()
 
 	def genera(self):
-			config = ConfigParser()
-			config.optionxform = str # Per ottenere case sensitive senza alterare altro oltre alla funzione qui riportata
+		config = ConfigParser()
+		config.optionxform = str # Per ottenere case sensitive senza alterare altro oltre alla funzione qui riportata
 
-			# Popolamento della struttura dati per generare il file di configurazione
-			for sezione, valori in self.schema.items():
-				config[sezione] = {} # Crea una sezione con i propri valori
-				for chiave, valore in valori.items():
-					config[sezione][chiave] = str(valore[0])
-					setattr(self, chiave, valore[0]) # Creo un attributo della classe
+		# Popolamento della struttura dati per generare il file di configurazione
+		for sezione, valori in self.schema.items():
+			config[sezione] = {} # Crea una sezione con i propri valori
+			for chiave, valore in valori.items():
+				config[sezione][chiave] = str(valore[0])
+				setattr(self, chiave, valore[0]) # Creo un attributo della classe
 
-			# Scrittura del file
-			with open("config.ini","w") as configFile:
-				config.write(configFile)
+		# Scrittura del file
+		with open("config.ini","w") as configFile:
+			config.write(configFile)
 
 	def carica(self):
 		config = ConfigParser()
@@ -66,6 +66,20 @@ class Config():
 		
 		self.validazioneTotale(config)
 
+	def salva(self):
+		config = ConfigParser()
+		config.optionxform = str # Per ottenere case sensitive senza alterare altro oltre alla funzione qui riportata
+
+		# Popolamento della struttura dati per generare il file di configurazione
+		for sezione, valori in self.schema.items():
+			config[sezione] = {} # Crea una sezione con i propri valori
+			for chiave, valore in valori.items():
+				config[sezione][chiave] = str(getattr(self, chiave))
+
+		# Scrittura del file
+		with open("config.ini","w") as configFile:
+			config.write(configFile)
+
 	def validazioneTotale(self, config):
 		for sezione, valori in self.schema.items():
 			if sezione not in config:
@@ -75,30 +89,30 @@ class Config():
 					raise MissingError("Parametro '%s' mancante nella sezione '%s' del file di configurazione." % (chiave, sezione))
 				try:
 					parametro = eval(config[sezione][chiave])
-				except NameError as e:
+				except (NameError, SyntaxError):
 					print("NameError: Errore valore parametro '%s', sezione '%s' del file di configurazione." % (chiave, sezione))
 				if type(parametro) not in valore:
 					raise ValueError("Valore del parametro '%s' errato nella sezione '%s'. Tipo previsto: %s." % (chiave, sezione, str(valore[1:])))
 				else:
 					setattr(self, chiave, parametro)
 	
-	def validazioneParametro(self, parametri):
-		for chiave, valore in parametri.items():
-			try:
-				parametro = eval(valore)
-			except NameError as e:
-				print("NameError: Errore valore parametro '%s', sezione '%s' del file di configurazione." % (chiave, sezione))
-			lista = list(self.schema.keys())
-			flag = True
-			while lista and flag:
-				sezione = lista.pop()
-				if chiave in self.schema[sezione]:
-					flag = False
-			if type(parametro) not in self.schema[sezione][chiave][1:]: # Controllo tipologia nuovo valore con i tipi possibili descritti
-				 print("Valore del parametro '%s' errato nella sezione '%s'. Tipo previsto: %s." % (chiave, sezione, valore[1]))
-			else:
-				setattr(self, chiave, parametro)
-
+	# def validazioneParametro(self, parametri):
+		# for chiave, valore in parametri.items():
+			# try:
+				# parametro = eval(valore)
+			# except (NameError, SyntaxError):
+				# print("NameError: Errore valore parametro '%s', sezione '%s' del file di configurazione." % (chiave, sezione))
+			# lista = list(self.schema.keys())
+			# flag = True
+			# while lista and flag:
+				# sezione = lista.pop()
+				# if chiave in self.schema[sezione]:
+					# flag = False
+			# if type(parametro) not in self.schema[sezione][chiave][1:]: # Controllo tipologia nuovo valore con i tipi possibili descritti
+				 # print("Valore del parametro '%s' errato nella sezione '%s'. Tipo previsto: %s." % (chiave, sezione, valore[1]))
+			# else:
+				# setattr(self, chiave, parametro)
+				
 class NoGuiConfig(Config):
 	def __init__(self):
 		super().__init__()

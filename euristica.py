@@ -69,27 +69,21 @@ def printt(istanza):
 		print(e,v)
 	print("\n########")
 
-def main(app=None):
-	# Gestione della configurazione
-	global ist,conf
-	if (not isfile("config.ini")):
-		conf = config.genConfig()
-	else:
-		conf = config.loadConfig()
-
-	ist = genIstanza(conf["Istanze"])
+def main(mainWindow=None):
+	#ist = genIstanza(conf["Istanze"])
 	ist = [[5], [5], [2, 4, 5, 1], [3], [5, 2], [4], [5, 2], [2, 3, 1, 5], [2], [1], [5, 3, 1], [5], [1, 4], [4], [1, 2, 3]]
 	print(ist,"\n\n")
 	durata = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
 	pazienti, jobs, ambulatori = euri(ist, durata)
-	printt(pazienti)
+	#printt(pazienti)
 	#print(jobs)
 	#print(ambulatori)
 	disegna(pazienti, durata)
-	c = {"Temperatura":2000,"Iterazioni":100000}
 	#for _ in range(4):
 		#SA.mossa(pazienti, jobs, ambulatori)
-	res = SA.sa(pazienti, jobs, ambulatori, c, 0.99, app)
+	res = SA.sa(pazienti, jobs, ambulatori, mainWindow.config, mainWindow)
+	
+	#res = SA.sa(pazienti, jobs, ambulatori, mainWindow.config.temperatura, mainWindow.config.iterazioni, mainWindow.config.tassoRaffreddamento, mainWindow)
 		#printt(pazienti)
 	disegna(pazienti, durata)
 
