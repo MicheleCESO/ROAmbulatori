@@ -26,7 +26,12 @@ class Config():
 						"pEsame2"		:	[20,	int, float],
 						"pEsame3"		:	[20,	int, float],
 						"pEsame4"		:	[20,	int, float],
-						"pEsame5"		:	[20,	int, float]
+						"pEsame5"		:	[20,	int, float],
+						"durata1"		:	[1,		int],
+						"durata2"		:	[2,		int],
+						"durata3"		:	[3,		int],
+						"durata4"		:	[4,		int],
+						"durata5"		:	[5,		int],
 					},
 					
 					"Parametri":

@@ -2,15 +2,12 @@ import sys										# Funzioni di sistema
 import argparse
 from time import sleep							# Per ritardare l'output
 from IstGen import genIstanza					# Generatore di istanze
-import config									# Gestisce la configurazione del programma
 from os.path import isfile						# Controllo presenza file
 from tkinter import *							# Per la grafica
 from config import Config, NoGuiConfig
 import SA
-from euristica import euri
+from euristica import *
 from disegno import disegna
-
-pi = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
 
 def main():
 	# Configurazione
@@ -78,7 +75,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-g", "--grafica", action="store_true", help="utilizzo di interfaccia grafica")
 	args = parser.parse_args() # Parsing degli argomenti
-	if args.grafica:
+	if args.grafica: # Se al'opzione 'agrafica' è stata utilizzata, crea la GUI
 		# Configurazione
 		conf = Config()
 		from grafica import MainWindow
@@ -87,5 +84,5 @@ if __name__ == "__main__":
 		main = MainWindow(app, conf)
 		main.show()
 		sys.exit(app.exec_())
-	else:
+	else: # Proseguimento del programma sul terminale
 		main()
