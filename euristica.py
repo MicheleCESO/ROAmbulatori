@@ -11,17 +11,26 @@ class Greedy():
 	def __init__(self, config):
 		self.config = config
 
-	def nuovaGreedy(self, ist, boolGrasp=True):
+	def nuovaGreedy(self, istanza, boolGrasp=True):
 		startAmbulatori = [0,0,0] # Momento libero per ogni ambulatorio
 
 		pazienti = {} # Struttura contenente informazioni sui lavori di tutti i pazienti
 		lavori = [[] for _ in range(5)] # Ogni sottolista contiene un elenco di start di un certo tipo di lavoro.
 										 # Questi sono i lavori che sono stati assegnati agli ambulatori
 		ambulatori = [[] for _ in range(3)] # Liste contenenti i pazienti in ordine cronologico per ogni ambulatorio
-		i = 1
-		for paziente in ist:
-		# Inizializzazione dizionario del nuovo paziente, inserendo anche la voce dei vari jobs
-			pazienti[i] = {"jobs": {}}
+		
+		# Creazione ordine di visita in bse al tipo di greedy in uso
+		if self.config.greedy == "LPT":
+			vettoreIndici = self.LPTGreedy(istanza)
+		elif self.config.greedy == "SPT":
+			vettoreIndici = self.SPTGreedy(istanza)
+		else:
+			vettoreIndici = self.FIFOGreedy(istanza)
+		print(istanza,"\n\n" ,vettoreIndici)
+		for indicePaziente in vettoreIndici:
+			print("Stato ambulatori: ", startAmbulatori)
+		# Inizializzazione dizionario del nuovo paziente, inserendo anche la voce dei vari jobs. La chiave del dizionario corrisponde all'id del paziente
+			pazienti[indicePaziente + 1] = {"jobs": {}}
 			
 			# Uso random per GRASP, scelta casuale tra i due ambulatori migliori
 			if boolGrasp:
@@ -29,21 +38,67 @@ class Greedy():
 			else: # GRASP disattivata
 				idAmbulatorio = startAmbulatori.index(min(startAmbulatori))
 			
-			# Ampliamento della voce paziente, inserendo anche l'ambulatorio e id paziente
-			pazienti[i]["ambulatorio"] = idAmbulatorio
-			pazienti[i]["id"] = i
+			# Ampliamento della voce paziente, inserendo anche l'ambulatorio, l'id paziente e la durata totale degli esami
+			pazienti[indicePaziente + 1]["ambulatorio"] = idAmbulatorio
+			pazienti[indicePaziente + 1]["id"] = indicePaziente + 1
+			pazienti[indicePaziente + 1]["durataTotale"] = 0
 			
 			# Inserimento dell'intera voce del paziente nella lista degli ambulatori. Viene creato un riferimento tra le due strutture dati primarie
-			ambulatori[idAmbulatorio].append(pazienti[i])
+			ambulatori[idAmbulatorio].append(pazienti[indicePaziente + 1])
 			
-			for idLavoro in paziente:
-				pazienti[i]["jobs"][idLavoro] = [] # Uso di liste per sfruttare il riferimento all'oggetto, permette un rapido aggiornamento dei parametri
+			# Ciclo sugli esami del paziente
+			for idLavoro in istanza[indicePaziente]:
+				pazienti[indicePaziente + 1]["durataTotale"] += getattr(self.config, "durata" + str(idLavoro))
+				pazienti[indicePaziente + 1]["jobs"][idLavoro] = [] # Uso di liste per sfruttare il riferimento all'oggetto, permette un rapido aggiornamento dei parametri
 
-				startAmbulatori[idAmbulatorio] = self.aggiungiTask(pazienti[i]["jobs"], i, lavori[idLavoro - 1], startAmbulatori[idAmbulatorio], idLavoro)
+				startAmbulatori[idAmbulatorio] = self.aggiungiTask(pazienti[indicePaziente + 1]["jobs"], indicePaziente + 1, lavori[idLavoro - 1], startAmbulatori[idAmbulatorio], idLavoro)
 			
-			pazienti[i]["start"] = min(list(pazienti[i]["jobs"].values()), key=lambda f: f.valore) # Salvataggio del parametro start paziente
-			i += 1
+			#pazienti[indicePaziente + 1]["start"] = min(list(pazienti[indicePaziente + 1]["jobs"].values()), key=lambda f: f.valore) # Salvataggio del parametro start paziente
+			print("Paziente ",indicePaziente," inserito nell'ambulatorio ",idAmbulatorio,", jobs: ")
+			for k,v in pazienti[indicePaziente + 1]["jobs"].items():
+				print(k,v.valore)
 		return [pazienti, lavori, ambulatori]
+
+	'''
+	Longest Processing Time. Questa greedy sceglie il paziente che occupa più a lungo gli ambulatori e lo assegna al primo disponibile.
+	Ad ogni passo si riduce la lista dei pazienti da poter scegliere.
+	'''
+	def LPTGreedy(self, istanza):
+		print("ciaO")
+		durataPazienti = [sum(x) for x in istanza] # Generazione del vettore delle durate
+		indiciPazienti = [x for x in range(len(istanza))] # Generazione del vettore degli indici
+		
+		listaIndici = [] # Soluzione della greedy
+		while indiciPazienti: # Fintanto che la lista non è vuota
+			indiceCandidato = durataPazienti.index(max(durataPazienti)) # Indice del candidato
+			listaIndici.append(indiciPazienti[indiceCandidato]) # Salvo l'indice del paziente nell'istanza da utilizzare successivamente
+			
+			del durataPazienti[indiceCandidato], indiciPazienti[indiceCandidato] # Rimozione del paziente già scelto
+		
+		return listaIndici
+
+	'''
+	Shortest Processing Time. Questa greedy sceglie il paziente che occupa meno a lungo gli ambulatori e lo assegna al primo disponibile.
+	Ad ogni passo si riduce la lista dei pazienti da poter scegliere.
+	'''
+	def SPTGreedy(self, istanza):
+		durataPazienti = [sum(x) for x in istanza] # Generazione del vettore delle durate
+		indiciPazienti = [x for x in range(len(istanza))] # Generazione del vettore degli indici
+		
+		listaIndici = [] # Soluzione della greedy
+		while indiciPazienti: # Fintanto che la lista non è vuota
+			indiceCandidato = durataPazienti.index(min(durataPazienti)) # Indice del candidato
+			listaIndici.append(indiciPazienti[indiceCandidato]) # Salvo l'indice del paziente nell'istanza da utilizzare successivamente
+			
+			del durataPazienti[indiceCandidato], indiciPazienti[indiceCandidato] # Rimozione del paziente già scelto
+		
+		return listaIndici
+	'''
+	First In First Out. Questa greedy sceglie il primo paziente che deve essere servito e lo assegna al primo disponibile.
+	La funzione serve per poter aumentare la leggibilità.
+	'''
+	def FIFOGreedy(self, istanza):
+		return [x for x in range(len(istanza))]
 
 	# Funzione che dona la proprietà casuale alla greedy
 	def sceltaGrasp(self, ambulatori):
@@ -76,10 +131,6 @@ class Greedy():
 				if spazioNonTrovato:
 					startAmbulatori = nuovostartAmbulatori
 					index += 1
-
-		#lavori.append([idPaziente, job]) # Inseriamo il job nella lista di supporto come lista, così il valore viene automaticamente aggiornato
-		#job.append(startAmbulatori) # Append perchè il valore usa una lista come incapsulamento
-		#lavori.sort(key=lambda fun: fun[1][0]) # Riordino dei job in senso crescente
 
 		jobs[idLavoro] = Valore(startAmbulatori)
 		lavori.append([idPaziente, jobs[idLavoro]])

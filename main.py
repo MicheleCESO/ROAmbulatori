@@ -1,11 +1,11 @@
 import sys										# Funzioni di sistema
 import argparse
 from time import sleep							# Per ritardare l'output
-from IstGen import genIstanza					# Generatore di istanze
+from istanza import Istanza						# Generatore di istanze
 from os.path import isfile						# Controllo presenza file
 from tkinter import *							# Per la grafica
 from config import Config, NoGuiConfig
-import SA
+from sa import SA
 from euristica import *
 from disegno import disegna
 
@@ -60,16 +60,18 @@ def main():
 				scelta[risposta]()
 
 def start(conf):
-	ist = genIstanza(conf)
+	ista = Istanza(conf)
+	ist = ista.nuovaIstanza()
 	ist = [[5], [5], [2, 4, 5, 1], [3], [5, 2], [4], [5, 2], [2, 3, 1, 5], [2], [1], [5, 3, 1], [5], [1, 4], [4], [1, 2, 3]]
 	
+	greedy = Greedy(conf)
 	durata = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
-	pazienti, jobs, ambulatori = euri(ist, durata)
-	disegna(pazienti, durata)
-	
-	res = SA.sa(pazienti, jobs, ambulatori, conf)
-	
-	disegna(pazienti, durata)
+	sol = greedy.nuovaGreedy(ist)
+	#disegna(pazienti, durata)
+	simulane = SA(conf)
+	res = simulane.sa(sol)
+	print(res)
+	#disegna(pazienti, durata)
 	
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()

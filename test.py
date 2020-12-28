@@ -3,11 +3,11 @@ from istanza import Istanza
 from euristica import Greedy as g2
 from sa import SA as s2
 conf = Config()
-i =Istanza(conf)
+i = Istanza(conf)
 ni = i.nuovaIstanza()
 gb = g2(conf)
 sol = gb.nuovaGreedy(ni)
 
-	
-sa2 = s2(conf)
-sol2 = sa2.sa(sol)
+print(sol)
+#sa2 = s2(conf)
+#sol2 = sa2.sa(sol)

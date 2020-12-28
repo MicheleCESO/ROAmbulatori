@@ -32,12 +32,14 @@ class Config():
 						"durata3"		:	[3,		int],
 						"durata4"		:	[4,		int],
 						"durata5"		:	[5,		int],
+						"greedy"		:	["LPT",	str]
 					},
 					
 					"Parametri":
 					{	"temperatura"			:	[2000,	int, float],
-						"tassoRaffreddamento"	:	[0.99,		float],
-						"iterazioni"			:	[10000,		int]
+						"tassoRaffreddamento"	:	[0.99,	float],
+						"iterazioni"			:	[10000,	int],
+						"probabilitàScambio"	:	[0.5,	float]
 					}
 
 				}
@@ -95,9 +97,9 @@ class Config():
 				try:
 					parametro = eval(config[sezione][chiave])
 				except (NameError, SyntaxError):
-					print("NameError: Errore valore parametro '%s', sezione '%s' del file di configurazione." % (chiave, sezione))
+					print("NameError: Errore valore parametro '%s', sezione '%s' del file di configurazione." % (chiave, sezione));parametro="LPT"
 				if type(parametro) not in valore:
-					raise ValueError("Valore del parametro '%s' errato nella sezione '%s'. Tipo previsto: %s." % (chiave, sezione, str(valore[1:])))
+					setattr(self, chiave, parametro)#raise ValueError("Valore del parametro '%s' errato nella sezione '%s'. Tipo previsto: %s." % (chiave, sezione, str(valore[1:])))
 				else:
 					setattr(self, chiave, parametro)
 	
