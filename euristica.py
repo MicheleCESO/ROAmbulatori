@@ -5,6 +5,8 @@
 #import SA
 from random import choice
 from valore import Valore
+from paziente import Paziente
+from soluzione import Soluzione
 
 class Greedy():
 
@@ -14,11 +16,8 @@ class Greedy():
 	def nuovaGreedy(self, istanza, boolGrasp=True):
 		startAmbulatori = [0,0,0] # Momento libero per ogni ambulatorio
 
-		pazienti = {} # Struttura contenente informazioni sui lavori di tutti i pazienti
-		lavori = [[] for _ in range(5)] # Ogni sottolista contiene un elenco di start di un certo tipo di lavoro.
-										 # Questi sono i lavori che sono stati assegnati agli ambulatori
-		ambulatori = [[] for _ in range(3)] # Liste contenenti i pazienti in ordine cronologico per ogni ambulatorio
-		
+		soluzione = Soluzione(self.config)
+
 		# Creazione ordine di visita in bse al tipo di greedy in uso
 		if self.config.greedy == "LPT":
 			vettoreIndici = self.LPTGreedy(istanza)
@@ -26,11 +25,10 @@ class Greedy():
 			vettoreIndici = self.SPTGreedy(istanza)
 		else:
 			vettoreIndici = self.FIFOGreedy(istanza)
-		print(istanza,"\n\n" ,vettoreIndici)
+		
 		for indicePaziente in vettoreIndici:
-			print("Stato ambulatori: ", startAmbulatori)
-		# Inizializzazione dizionario del nuovo paziente, inserendo anche la voce dei vari jobs. La chiave del dizionario corrisponde all'id del paziente
-			pazienti[indicePaziente + 1] = {"jobs": {}}
+			# Inizializzazione dizionario del nuovo paziente, inserendo anche la voce dei vari jobs. La chiave del dizionario corrisponde all'id del paziente
+			soluzione.pazienti[indicePaziente + 1] = paziente = Paziente()
 			
 			# Uso random per GRASP, scelta casuale tra i due ambulatori migliori
 			if boolGrasp:
@@ -38,33 +36,29 @@ class Greedy():
 			else: # GRASP disattivata
 				idAmbulatorio = startAmbulatori.index(min(startAmbulatori))
 			
-			# Ampliamento della voce paziente, inserendo anche l'ambulatorio, l'id paziente e la durata totale degli esami
-			pazienti[indicePaziente + 1]["ambulatorio"] = idAmbulatorio
-			pazienti[indicePaziente + 1]["id"] = indicePaziente + 1
-			pazienti[indicePaziente + 1]["durataTotale"] = 0
-			
+			# Ampliamento della voce paziente, inserendo anche l'ambulatorio, l'id paziente, la durata totale degli esami e la posizione nell'ambulatorio
+			paziente.ambulatorio = idAmbulatorio
+			paziente.id = indicePaziente + 1
+			paziente.durataTotale = 0
+			paziente.posizione = len(soluzione.ambulatori[idAmbulatorio]) # La prima posizione parte da zero, per essere compatibile con le liste
+
 			# Inserimento dell'intera voce del paziente nella lista degli ambulatori. Viene creato un riferimento tra le due strutture dati primarie
-			ambulatori[idAmbulatorio].append(pazienti[indicePaziente + 1])
+			soluzione.ambulatori[idAmbulatorio].append(paziente)
 			
 			# Ciclo sugli esami del paziente
-			for idLavoro in istanza[indicePaziente]:
-				pazienti[indicePaziente + 1]["durataTotale"] += getattr(self.config, "durata" + str(idLavoro))
-				pazienti[indicePaziente + 1]["jobs"][idLavoro] = [] # Uso di liste per sfruttare il riferimento all'oggetto, permette un rapido aggiornamento dei parametri
+			for idEsame in istanza[indicePaziente]:
+				paziente.durataTotale += getattr(self.config, "durata" + str(idEsame))
+				paziente.ordineEsami.append(idEsame)
 
-				startAmbulatori[idAmbulatorio] = self.aggiungiTask(pazienti[indicePaziente + 1]["jobs"], indicePaziente + 1, lavori[idLavoro - 1], startAmbulatori[idAmbulatorio], idLavoro)
+				startAmbulatori[idAmbulatorio] = self.aggiungiTask(paziente.esami, indicePaziente + 1, soluzione.esami[idEsame - 1], startAmbulatori[idAmbulatorio], idEsame)
 			
-			#pazienti[indicePaziente + 1]["start"] = min(list(pazienti[indicePaziente + 1]["jobs"].values()), key=lambda f: f.valore) # Salvataggio del parametro start paziente
-			print("Paziente ",indicePaziente," inserito nell'ambulatorio ",idAmbulatorio,", jobs: ")
-			for k,v in pazienti[indicePaziente + 1]["jobs"].items():
-				print(k,v.valore)
-		return [pazienti, lavori, ambulatori]
+		return soluzione
 
 	'''
 	Longest Processing Time. Questa greedy sceglie il paziente che occupa più a lungo gli ambulatori e lo assegna al primo disponibile.
 	Ad ogni passo si riduce la lista dei pazienti da poter scegliere.
 	'''
 	def LPTGreedy(self, istanza):
-		print("ciaO")
 		durataPazienti = [sum(x) for x in istanza] # Generazione del vettore delle durate
 		indiciPazienti = [x for x in range(len(istanza))] # Generazione del vettore degli indici
 		
@@ -120,47 +114,33 @@ class Greedy():
 		return ambulatoriMigliori[choice([0, 1])]
 	
 	# Funzione che aggiunge il singolo esame di un paziente alla soluzione greedy
-	def aggiungiTask(self, jobs, idPaziente, lavori, startAmbulatori, idLavoro):
-		durata = getattr(self.config, "durata" + str(idLavoro)) # Estrazione dinamica della durata del task
+	def aggiungiTask(self, esamiPaziente, idPaziente, esami, startAmbulatori, idEsami):
+		durata = getattr(self.config, "durata" + str(idEsami)) # Estrazione dinamica della durata del task
 		
-		if len(lavori) > 0: # Se esiste almeno un altro job dello stesso tipo, si verifica se ci sono conflitti
+		if len(esami) > 0: # Se esiste almeno un altro job dello stesso tipo, si verifica se ci sono conflitti
 			index = 0
 			spazioNonTrovato = True
-			while index < len(lavori) and spazioNonTrovato: # Ciclo dei job per cercare la posizione in cui inserire quello nuovo
-				[nuovostartAmbulatori, spazioNonTrovato] = self.controlloProssimoJob(startAmbulatori, durata, lavori[index][1].valore)  # Aggiunta dell'indice zero per accedere al valore nella lista contenente il singolo valore.
+			while index < len(esami) and spazioNonTrovato: # Ciclo dei job per cercare la posizione in cui inserire quello nuovo
+				nuovostartAmbulatori, spazioNonTrovato = self.controlloProssimoJob(startAmbulatori, durata, esami[index][1].valore)  # Aggiunta dell'indice zero per accedere al valore nella lista contenente il singolo valore.
 				if spazioNonTrovato:
 					startAmbulatori = nuovostartAmbulatori
 					index += 1
 
-		jobs[idLavoro] = Valore(startAmbulatori)
-		lavori.append([idPaziente, jobs[idLavoro]])
-		lavori.sort(key=lambda x: x[1].valore)
+		esamiPaziente[idEsami] = Valore(startAmbulatori)
+		esami.append([idPaziente, esamiPaziente[idEsami]])
+		esami.sort(key=lambda x: x[1].valore)
 
 		return startAmbulatori + durata # Ritorno il nuovo startAmbulatori dell'ambulatorio
 
 	# Verifica dei casi possibili: il job osservato è presente (conflitto in atto), futuro (deve ancora incominciare), passato (è già terminato).
-	def controlloProssimoJob(self, startAmbulatori, durata, startJob):
-		if startAmbulatori + durata > startJob and startJob + durata > startAmbulatori: # Condizione di conflitto
+	def controlloProssimoJob(self, startAmbulatori, durata, startEsame):
+		if startAmbulatori + durata > startEsame and startEsame + durata > startAmbulatori: # Condizione di conflitto
 			spazioNonTrovato = True
-			return [startJob + durata, spazioNonTrovato] # startAmbulatori posizionato alla fine del task a destra
+			return [startEsame + durata, spazioNonTrovato] # startAmbulatori posizionato alla fine del task a destra
 		else:
-			if startAmbulatori < startJob: # Sto controllando un job che viene dopo, senza conflitti, quindi posso inserire il nuovo job nel suo startAmbulatori
+			if startAmbulatori < startEsame: # Sto controllando un job che viene dopo, senza conflitti, quindi posso inserire il nuovo job nel suo startAmbulatori
 				spazioNonTrovato = False
 				return [startAmbulatori, spazioNonTrovato]
 			else: # Il job in analisi è da ignorare in quanto è già terminato all'istante segnato da startAmbulatori
 				spazioNonTrovato = True
-				return [startAmbulatori, spazioNonTrovato]
-
-def main(mainWindow=None):
-	#ist = genIstanza(conf["Istanze"])
-	ist = [[5], [5], [2, 4, 5, 1], [3], [5, 2], [4], [5, 2], [2, 3, 1, 5], [2], [1], [5, 3, 1], [5], [1, 4], [4], [1, 2, 3]]
-	print(ist,"\n\n")
-	durata = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
-	pazienti, jobs, ambulatori = euri(ist, durata, True)
-	disegna(pazienti, durata)
-	res = SA.sa(pazienti, jobs, ambulatori, mainWindow.config, mainWindow)
-	
-	disegna(pazienti, durata)
-
-if __name__ == "__main__":
-	main()
+				return startAmbulatori, spazioNonTrovato
