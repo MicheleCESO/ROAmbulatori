@@ -9,13 +9,29 @@ class Soluzione():
 		self.energia = None							# Bontà della soluzione
 		self.efficienza = None						# Quanto è efficiente la soluzione
 		self.makeSpan = None						# Il punto in cui l'ultimo ambulatorio smette di lavorare
+
+	def verifica(self,v, B):
+		print("verifica...")
+		for amb in self.ambulatori:
+			pp=0
+			for paz in amb:
+				if paz.id in self.idGuardati:
+					if paz.posizione != B.pazienti[paz.id].posizione:
+						print(v,"Paziente visitato ",paz.id,"in posizione errata")
+						input()
+				else:
+					if paz.posizione != pp:
+						print(v,"Paziente non osservato",paz.id,"in posizione errata")
+						input()
+				pp+=1  
+
 	'''
 	Funzione per calcolare l'energia di uno stato.
 	Il calcolo si basa sulla quantità di spazio non utilizzato che va dall'istante zero, all'istante dell'ultimo ambulatorio che finisce gli esami, ciò definisce una soglia di analisi.
 	Non importa se un ambulatorio termina prima dell'istante definito dalla soglia, tutta quest'area viene considerata negativa, in quanto l'ambulatorio potrebbe eseguire degli esami per alleggerire l'ambulatorio che sta ancora lavorando.
 	'''
-	def calcolaEnergia(self, soluzione):
-		ultimoJob = [max(soluzione.ambulatori[i][-1].esami.items(), key=lambda k: k[1].valore) for i in range(3) if len(soluzione.ambulatori[i]) > 0] # Crea una lista contenente l'ultimo job di ogni ambulatorio
+	def calcolaEnergia(self):
+		ultimoJob = [max(self.ambulatori[i][-1].esami.items(), key=lambda k: k[1].valore) for i in range(3) if len(self.ambulatori[i]) > 0] # Crea una lista contenente l'ultimo job di ogni ambulatorio
 		tipoJob, sogliaStart = max(ultimoJob, key=lambda k: k[1].valore + getattr(self.config, "durata" + str(k[0]))) # Restituisce due elementi: il tipo di job ed il suo start
 		makeSpan = sogliaStart.valore + getattr(self.config, "durata" + str(tipoJob))
 
@@ -25,15 +41,15 @@ class Soluzione():
 
 		for i in range(3): # Per ogni ambulatorio
 			energiaFinale = makeSpan
-			for paziente in soluzione.ambulatori[i]: # Per ogni paziente
+			for paziente in self.ambulatori[i]: # Per ogni paziente
 				for job in paziente.ordineEsami: # Per ogni job
 					energiaFinale -= getattr(self.config, "durata" + str(job))
 			efficienza.append((makeSpan - energiaFinale) / makeSpan) # Calcolo dell'efficienza di un ambulatorio
 			Etot += energiaFinale
 		
-		soluzione.energia = Etot
-		soluzione.efficienza = efficienza
-		soluzione.makeSpan = makeSpan
+		self.energia = Etot
+		self.efficienza = efficienza
+		self.makeSpan = makeSpan
 
 	'''
 	Questa funzione controlla se ci sono conflitti tra i vari pazienti.
@@ -160,10 +176,10 @@ class Soluzione():
 	'''
 	Funzione che genera una matrice indicante la sequenza cronologica di tutti i pazienti, indicante tutti gli id. 
 	'''
-	def generaMatricePosizione(self, ambulatori):
+	def generaMatricePosizione(self):
 		matrice = []
 		for i in range(3): # Per ogni ambulatorio
 			matrice.append([])
-			for paziente in ambulatori[i]:
+			for paziente in self.ambulatori[i]:
 				matrice[i].append(paziente.id)
 		return matrice

@@ -35,11 +35,15 @@ class Config():
 						"greedy"		:	["LPT",	str]
 					},
 					
-					"Parametri":
+					"SA":
 					{	"temperatura"			:	[2000,	int, float],
 						"tassoRaffreddamento"	:	[0.99,	float],
 						"iterazioni"			:	[10000,	int],
 						"probabilitàScambio"	:	[0.5,	float]
+					},
+
+					"Path Relinking":
+					{	"dimensioneLista"		:	[1,		int]
 					}
 
 				}

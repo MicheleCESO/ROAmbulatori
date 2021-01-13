@@ -191,11 +191,11 @@ class SA():
 		itera = 0;
 		calore = self.config.temperatura
 		
-		soluzioneCorrente.calcolaEnergia(soluzioneCorrente)
+		soluzioneCorrente.calcolaEnergia()
 		while itera < self.config.iterazioni:
 			calore = calore * self.config.tassoRaffreddamento
 			soluzioneNuova = self.mossa(soluzioneCorrente)
-			soluzioneNuova.calcolaEnergia(soluzioneNuova)
+			soluzioneNuova.calcolaEnergia()
 			
 			# Se la soluzione nuova è migliore o nonostante sia peggiore, viene deciso di mantenerla, sostituendo la vecchia energia e soluzione
 			if soluzioneNuova.energia <= soluzioneCorrente.energia or exp(-(soluzioneNuova.energia - soluzioneCorrente.energia)/calore) > uniform(0, 1):

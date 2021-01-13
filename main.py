@@ -3,11 +3,9 @@ import argparse
 from time import sleep							# Per ritardare l'output
 from istanza import Istanza						# Generatore di istanze
 from os.path import isfile						# Controllo presenza file
-from tkinter import *							# Per la grafica
 from config import Config, NoGuiConfig
 from sa import SA
 from euristica import *
-from disegno import disegna
 
 def main():
 	# Configurazione
@@ -77,10 +75,10 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-g", "--grafica", action="store_true", help="utilizzo di interfaccia grafica")
 	args = parser.parse_args() # Parsing degli argomenti
-	if args.grafica: # Se al'opzione 'agrafica' è stata utilizzata, crea la GUI
+	if args.grafica: # Se al'opzione 'grafica' è stata utilizzata, crea la GUI
 		# Configurazione
 		conf = Config()
-		from grafica import MainWindow
+		from grafica3 import MainWindow
 		from PyQt5 import QtWidgets
 		app = QtWidgets.QApplication(sys.argv)
 		main = MainWindow(app, conf)
