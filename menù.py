@@ -120,7 +120,7 @@ ______  _                                  _____                            _   
 		for i in range(self.config.PRGenerabili):
 			print("Generazione soluzione {} di {}\n".format(i + 1, self.config.PRGenerabili))
 			self.listaPathRelinking.append(self.classePathRelinking.start(choice(self.listaSimulatedAnnealing),choice(self.listaSimulatedAnnealing)))
-		print("Generazione soluzioni Path Relinking completata.\n")
+		print("Generazione soluzioni Path Relinking completata.")
 		
 		# Ricerca soluzione migliore
 		soluzioniTotali = self.listaGreedy + self.listaSimulatedAnnealing + self.listaPathRelinking

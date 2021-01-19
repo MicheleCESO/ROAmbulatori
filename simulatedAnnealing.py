@@ -1,7 +1,5 @@
 from math import exp		# Per l'esponenziale e
-from random import uniform	# Per generare numeri pseudocasuali
-from random import shuffle,randint,choice
-from disegno import disegna
+from random import shuffle,randint,choice, uniform
 from copy import deepcopy
 
 class SimulatedAnnealing():

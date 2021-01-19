@@ -1,5 +1,4 @@
-from itertools import permutations	# Per gestire le combinazioni di task
-from random import randint, choice, shuffle, uniform	# Per la casualità
+from random import randint, uniform	# Per la casualità
 
 class Istanza():
 	def __init__(self, config):

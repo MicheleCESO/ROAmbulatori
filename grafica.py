@@ -1,14 +1,12 @@
 from PyQt5 import QtWidgets, uic, QtGui, QtCore
-import pyqtgraph as pg
 import sys
-from time import sleep
 
 class MainWindow(QtWidgets.QMainWindow):
 
 	def __init__(self, conf):
 		super(MainWindow, self).__init__()
 		self.config = conf # Configurazione
-		uic.loadUi("GUI3.ui", self)
+		uic.loadUi("GUI.ui", self)
 
 		# Passaggio parametri a widget
 		self.istanza.inizializzaPar(conf, "Istanza")
@@ -19,7 +17,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.path_relinking_1.inizializzaPar(conf, "Path Relinking slot 1")
 		self.path_relinking_2.inizializzaPar(conf, "Path Relinking slot 2")
 
-class Widget(QtGui.QWidget):		
+class Widget(QtWidgets.QWidget):		
 	
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
