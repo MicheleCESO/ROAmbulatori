@@ -1,8 +1,3 @@
-#import config
-#from os.path import isfile
-#from IstGen import genIstanza
-#from disegno import disegna
-#import SA
 from random import choice
 from valore import Valore
 from paziente import Paziente
@@ -13,15 +8,15 @@ class Greedy():
 	def __init__(self, config):
 		self.config = config
 
-	def nuovaGreedy(self, istanza, boolGrasp=True):
+	def start(self, istanza, tipoGreedy="LPT" ,casualità=True):
 		startAmbulatori = [0,0,0] # Momento libero per ogni ambulatorio
 
 		soluzione = Soluzione(self.config)
 
 		# Creazione ordine di visita in bse al tipo di greedy in uso
-		if self.config.greedy == "LPT":
+		if tipoGreedy == "LPT":
 			vettoreIndici = self.LPTGreedy(istanza)
-		elif self.config.greedy == "SPT":
+		elif tipoGreedy == "SPT":
 			vettoreIndici = self.SPTGreedy(istanza)
 		else:
 			vettoreIndici = self.FIFOGreedy(istanza)
@@ -31,7 +26,7 @@ class Greedy():
 			soluzione.pazienti[indicePaziente + 1] = paziente = Paziente()
 			
 			# Uso random per GRASP, scelta casuale tra i due ambulatori migliori
-			if boolGrasp:
+			if casualità:
 				idAmbulatorio = self.sceltaGrasp(startAmbulatori)
 			else: # GRASP disattivata
 				idAmbulatorio = startAmbulatori.index(min(startAmbulatori))
@@ -51,7 +46,10 @@ class Greedy():
 				paziente.ordineEsami.append(idEsame)
 
 				startAmbulatori[idAmbulatorio] = self.aggiungiTask(paziente.esami, indicePaziente + 1, soluzione.esami[idEsame - 1], startAmbulatori[idAmbulatorio], idEsame)
-			
+		
+		soluzione.calcolaEnergia()
+		soluzione.tipoGreedy = tipoGreedy
+		soluzione.tipo = "G"
 		return soluzione
 
 	'''

@@ -4,7 +4,7 @@ from random import shuffle,randint,choice
 from disegno import disegna
 from copy import deepcopy
 
-class SA():
+class SimulatedAnnealing():
 	def __init__(self, config):
 		self.config = config
 
@@ -79,7 +79,7 @@ class SA():
 		return paziente1, paziente2
 	
 	'''
-	Funzione per spostare un paziente casuale in coda ad un ambulatorio casuale
+	Funzione per spostare un paziente casuale in coda ad un ambulatorio casuale.
 	'''
 	def spostamentoPaziente(self, statoAmbulatori):
 		# Scelta del paziente da spostare
@@ -105,80 +105,6 @@ class SA():
 		
 		return candidato
 
-	# Simulated Annealing
-	def saGraph(self, solPazienti, solJobs, statoAmbulatori, mainWindow):
-		itera = 0
-		calore = self.config.temperatura
-		
-		vecchiaEnergia, efficienza, sogliaMassima = energia(statoAmbulatori)
-
-		mainWindow.resetGrafico()
-		mainWindow.start.setEnabled(False) # Disattivazione tasto start
-
-		mainWindow.widget.creaOggetti(solPazienti, sogliaMassima)
-		mainWindow.widgetSolIniziale.creaOggetti(solPazienti, sogliaMassima)
-		
-		mainWindow.valoreTemperatura.setNum(calore)
-		
-		mainWindow.maxE.setNum(vecchiaEnergia)
-		mainWindow.minE.setNum(vecchiaEnergia)
-		mainWindow.energiaSol.setNum(vecchiaEnergia)
-		mainWindow.energiaIniziale.setNum(vecchiaEnergia)
-		maxE = vecchiaEnergia
-		minE = vecchiaEnergia
-		
-		# Parametri di efficienza ambulatori
-		mainWindow.efficienza1.setText("{:.2%}".format(efficienza[0]))
-		mainWindow.efficienza2.setText("{:.2%}".format(efficienza[1]))
-		mainWindow.efficienza3.setText("{:.2%}".format(efficienza[2]))
-		mainWindow.efficienzaMedia.setText("{:.2%}".format((efficienza[0] + efficienza[1] + efficienza[2]) / 3))
-		
-		mainWindow.efficienza1Iniziale.setText("{:.2%}".format(efficienza[0]))
-		mainWindow.efficienza2Iniziale.setText("{:.2%}".format(efficienza[1]))
-		mainWindow.efficienza3Iniziale.setText("{:.2%}".format(efficienza[2]))
-		mainWindow.efficienzaMediaIniziale.setText("{:.2%}".format((efficienza[0] + efficienza[1] + efficienza[2]) / 3))
-		mainWindow.app.processEvents()
-
-		while itera < self.config.iterazioni:# and mainWindow.running:
-			calore = calore * self.config.tassoRaffreddamento
-			solPazienti_vecchio, jobs_vecchio, ambulatori_vecchio = self.mossa(solPazienti, solJobs, statoAmbulatori)
-			nuovaEnergia, efficienza, sogliaMassima = self.energia(statoAmbulatori)
-			
-			delta = nuovaEnergia - vecchiaEnergia
-			# Se la soluzione nuova è migliore o nonostante sia peggiore (non uguale), viene deciso di mantenerla
-			if nuovaEnergia < vecchiaEnergia or exp(-(delta)/calore) > uniform(0,1) and delta != 0:
-				mainWindow.energiaSol.setNum(nuovaEnergia)
-				vecchiaEnergia = nuovaEnergia
-				mainWindow.widget.creaOggetti(solPazienti, sogliaMassima)
-				
-				# Aggiornamento efficienza
-				mainWindow.efficienza1.setText("{:.2%}".format(efficienza[0]))
-				mainWindow.efficienza2.setText("{:.2%}".format(efficienza[1]))
-				mainWindow.efficienza3.setText("{:.2%}".format(efficienza[2]))
-				mainWindow.efficienzaMedia.setText("{:.2%}".format((efficienza[0] + efficienza[1] + efficienza[2]) / 3))
-			else:
-				solPazienti = solPazienti_vecchio
-				solJobs = jobs_vecchio
-				statoAmbulatori = ambulatori_vecchio
-
-			mainWindow.valoreTemperatura.setNum(calore)
-
-
-			mainWindow.progressBar.setValue(((itera + 1) / self.config.iterazioni) * 100)
-			mainWindow.progressBarLabel.setText("{:.2%}".format((itera + 1) / self.config.iterazioni))
-			
-			if vecchiaEnergia > maxE:
-				mainWindow.maxE.setNum(vecchiaEnergia)
-				maxE = vecchiaEnergia
-			if vecchiaEnergia < minE:
-				mainWindow.minE.setNum(vecchiaEnergia)
-				minE = vecchiaEnergia
-			mainWindow.draw(self.config.iterazioni - (itera + 1), vecchiaEnergia) # Disegno andamento energia
-			
-			mainWindow.app.processEvents()
-			itera += 1
-		return solPazienti
-	
 	'''
 	Funzione principale del Simulated Annealing.
 	L'algoritmo crea una nuova soluzione applicando una "mossa" (scambio di pazienti o spostamento di un singolo paziente in coda ad un amvbulatorio) alla soluzione attuale, successivamente compara l'energia delle due soluzioni:
@@ -187,7 +113,9 @@ class SA():
 		di mantenerla ugualmente (exp(- delta / temperatura)).
 	Queste scelte si ripetono ad ogni iterazione, fino al raggiungimento della soglia impostata dall'utente. A questo punto viene ritornata la soluzione finale, quella che alla fine risulta con l'energia minore.
 	'''
-	def sa(self, soluzioneCorrente):
+	def start(self, soluzioneCorrente):
+		print("\nIn esecuzione...")
+	
 		itera = 0;
 		calore = self.config.temperatura
 		
@@ -201,4 +129,5 @@ class SA():
 			if soluzioneNuova.energia <= soluzioneCorrente.energia or exp(-(soluzioneNuova.energia - soluzioneCorrente.energia)/calore) > uniform(0, 1):
 				soluzioneCorrente = soluzioneNuova
 			itera += 1
+		soluzioneCorrente.tipo = "SA"
 		return soluzioneCorrente

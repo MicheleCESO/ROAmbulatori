@@ -5,25 +5,12 @@ class Soluzione():
 		self.esami = [[] for _ in range(5)]			# Ogni sottolista contiene un elenco di start di un certo tipo di esame assegnati 
 													# agli ambulatori
 		self.ambulatori = [[] for _ in range(3)]	# Liste contenenti i pazienti in ordine cronologico per ogni ambulatorio
+		self.tipo = None							# Tipologia di soluzione generata (dipende dall'algoritmo)
+		self.tipoGreedy = None						# Tipologia greedy
 
 		self.energia = None							# Bontà della soluzione
 		self.efficienza = None						# Quanto è efficiente la soluzione
 		self.makeSpan = None						# Il punto in cui l'ultimo ambulatorio smette di lavorare
-
-	def verifica(self,v, B):
-		print("verifica...")
-		for amb in self.ambulatori:
-			pp=0
-			for paz in amb:
-				if paz.id in self.idGuardati:
-					if paz.posizione != B.pazienti[paz.id].posizione:
-						print(v,"Paziente visitato ",paz.id,"in posizione errata")
-						input()
-				else:
-					if paz.posizione != pp:
-						print(v,"Paziente non osservato",paz.id,"in posizione errata")
-						input()
-				pp+=1  
 
 	'''
 	Funzione per calcolare l'energia di uno stato.
@@ -31,9 +18,9 @@ class Soluzione():
 	Non importa se un ambulatorio termina prima dell'istante definito dalla soglia, tutta quest'area viene considerata negativa, in quanto l'ambulatorio potrebbe eseguire degli esami per alleggerire l'ambulatorio che sta ancora lavorando.
 	'''
 	def calcolaEnergia(self):
-		ultimoJob = [max(self.ambulatori[i][-1].esami.items(), key=lambda k: k[1].valore) for i in range(3) if len(self.ambulatori[i]) > 0] # Crea una lista contenente l'ultimo job di ogni ambulatorio
-		tipoJob, sogliaStart = max(ultimoJob, key=lambda k: k[1].valore + getattr(self.config, "durata" + str(k[0]))) # Restituisce due elementi: il tipo di job ed il suo start
-		makeSpan = sogliaStart.valore + getattr(self.config, "durata" + str(tipoJob))
+		ultimoEsame = [max(self.ambulatori[i][-1].esami.items(), key=lambda k: k[1].valore) for i in range(3) if len(self.ambulatori[i]) > 0] # Crea una lista contenente l'ultimo job di ogni ambulatorio
+		tipoEsame, sogliaStart = max(ultimoEsame, key=lambda k: k[1].valore + getattr(self.config, "durata" + str(k[0]))) # Restituisce due elementi: il tipo di job ed il suo start
+		makeSpan = sogliaStart.valore + getattr(self.config, "durata" + str(tipoEsame))
 
 		Etot = 0
 
@@ -48,7 +35,7 @@ class Soluzione():
 			Etot += energiaFinale
 		
 		self.energia = Etot
-		self.efficienza = efficienza
+		self.efficienza = (efficienza[0] + efficienza[1] + efficienza[2]) / 3
 		self.makeSpan = makeSpan
 
 	'''

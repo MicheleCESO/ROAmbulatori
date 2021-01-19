@@ -4,6 +4,7 @@ from math import floor		# Per la ricerca dicotomica
 class PathRelinking():
 	def __init__(self, config):
 		self.config = config
+		self.percorsiCompleti = 0
 
 	def dive(self,m1,m2):
 		for a1 in m1:
@@ -29,28 +30,32 @@ class PathRelinking():
 			print(paziente.id,soluzione.ambulatori[paziente.ambulatorio][paziente.posizione].id)
 		print("\n")
 
-	def main(self, soluzioneIniziale, soluzioneFinale):
-		print("\n\n\n\n")
-		listaSoluzioni = [soluzioneIniziale] # Lista ordinata delle soluzioni (pool)
-		listaMatrici = [soluzioneIniziale.generaMatricePosizione()]	# Lista ordinata delle posizioni dei pazienti per ogni soluzione
-		soluzioneIniziale.livello=0
+	def start(self, soluzioneIniziale, soluzioneFinale):
+		self.percorsiCompleti = 0
+		soluzioneA = deepcopy(soluzioneIniziale)
+		soluzioneB = deepcopy(soluzioneFinale)
+
+		listaSoluzioni = [soluzioneA] # Lista ordinata delle soluzioni (pool)
+		listaMatrici = [soluzioneA.generaMatricePosizione()]	# Lista ordinata delle posizioni dei pazienti per ogni soluzione
+		
 		# Inizializzazione soluzione migliore
-		if soluzioneFinale.energia <= soluzioneIniziale.energia:
-			soluzioneMigliore = soluzioneFinale
+		if soluzioneB.energia <= soluzioneA.energia:
+			soluzioneMigliore = soluzioneB
 		else:
-			soluzioneMigliore = soluzioneIniziale
-		i=0
+			soluzioneMigliore = soluzioneA
+		
 		while len(listaSoluzioni) > 0:
 			prossimaSoluzione = listaSoluzioni.pop(0) # Estrazione prossima soluzione da espandere
-			del listaMatrici[0]
-			print(10000000-len(listaSoluzioni))
-			soluzioneMigliore, listaSoluzioni, listaMatrici ,i= self.creaSoluzioni(listaSoluzioni, listaMatrici, prossimaSoluzione, soluzioneFinale, soluzioneMigliore,i)
+			del listaMatrici[0] # Eliminazione matrice della soluzione già estratta
+			soluzioneMigliore, listaSoluzioni, listaMatrici = self.creaSoluzioni(listaSoluzioni, listaMatrici, prossimaSoluzione, soluzioneB, soluzioneMigliore)
+		
+		soluzioneMigliore.tipo = "PR"
 		return soluzioneMigliore
 
 	'''
 	Funzione che crea le soluzioni di una mossa più vicine alla soluzione B.
 	'''
-	def creaSoluzioni(self, listaSoluzioni, listaMatrici, soluzioneA, soluzioneB, soluzioneMigliore,i):		
+	def creaSoluzioni(self, listaSoluzioni, listaMatrici, soluzioneA, soluzioneB, soluzioneMigliore):		
 		# Controllo iterativo sui pazienti, generando nuove soluzioni se i pazienti incontrati risultano fuori posto
 		for idPaziente in range(1, len(soluzioneA.pazienti) + 1):
 			# Condizione in cui un paziente si trova in una posizione diversa rispetto le due soluzioni
@@ -73,10 +78,10 @@ class PathRelinking():
 				if nuovaSoluzione.energia < soluzioneMigliore.energia:
 					soluzioneMigliore = nuovaSoluzione
 
+		# E' stata trovata la soluzione finale, quindi è stato completato un percorso
 		if soluzioneA.generaMatricePosizione() == soluzioneB.generaMatricePosizione():
-			i+=1
-			#print("i: ",i)
-		return soluzioneMigliore, listaSoluzioni, listaMatrici,i
+			self.percorsiCompleti += 1
+		return soluzioneMigliore, listaSoluzioni, listaMatrici
 
 	def generaSoluzione(self, soluzioneA, idPaziente, soluzioneB):
 		nuovaSoluzione = deepcopy(soluzioneA)

@@ -1,7 +1,7 @@
 from config import Config
 from istanza import Istanza
 from euristica import Greedy as g1
-from sa import SA as s1
+from simulatedAnnealing import SimulatedAnnealing as s1
 from random import seed
 from pathRelinking import PathRelinking as PR
 seed(1000)
@@ -32,5 +32,5 @@ for i in range(len(m1)):
 		except IndexError:
 				diversi+=1
 print("diversi: ",diversi)
-ss = path.main(sol1,sol2)#sol1,sol2)
+ss = path.main(sol1,sol2)
 print(ss,"\n\n",ss.energia,"\n",len(ss.pazienti))
