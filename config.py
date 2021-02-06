@@ -1,110 +1,192 @@
-import configparser
+from configparser import ConfigParser
 
-conf=None
-# Funzione per generare un file di configurazione nel caso manchi.
-def genConfig():
-	config = configparser.ConfigParser()
-	config.optionxform = str	# Per ottenere case sensitive senza alterare altro oltre alla funzione qui riportata
+class SectionError(Exception): # Eccezione mancanza di sezione
+	pass
 
-	dicti = {
-				"Parametri":
-				{	"PesoConflitto"	:	1,
-					"PesoMakespan"	:	1,
-					"Temperatura"	:	2000,
-					"Iterazioni"	:	5000
-				},
+class MissingError(Exception): # Eccezione mancanza di parametri
+	pass
+	
+class Config():
+	def __init__(self):
+		from os.path import isfile
+		
+		# Dizionario dei parametri che il modulo configparser necessita per creare il file di configurazione
+		self.schema = {
+					"Istanze":
+					{
+						"minPazienti"			:	[10,		int],
+						"maxPazienti"			:	[20,		int],
+						"p1Esami"				:	[20.0,		float],
+						"p2Esami"				:	[20.0,		float],
+						"p3Esami"				:	[20.0,		float],
+						"p4Esami"				:	[20.0,		float],
+						"p5Esami"				:	[20.0,		float],
+						"pEsame1"				:	[20.0,		float],
+						"pEsame2"				:	[20.0,		float],
+						"pEsame3"				:	[20.0,		float],
+						"pEsame4"				:	[20.0,		float],
+						"pEsame5"				:	[20.0,		float],
+						"durata1"				:	[1,			int],
+						"durata2"				:	[2,			int],
+						"durata3"				:	[3,			int],
+						"durata4"				:	[4,			int],
+						"durata5"				:	[5,			int],
+						"GreedyGenerabili"		:	[50,		int],
+						"PRGenerabili"			:	[50,		int]
+					},
+					
+					"SA":
+					{	"temperatura"			:	[2000.0,	float],
+						"tassoRaffreddamento"	:	[0.99,		float],
+						"iterazioni"			:	[1000,		int],
+						"probabilitàScambio"	:	[0.5,		float]
+					},
 
-				"Istanze":
-				{
-					"MinPazienti"	:	10,
-					"MaxPazienti"	:	20,
-					"MinTasks"		:	1,
-					"MaxTasks"		:	5
+					"Path Relinking":
+					{	"dimensioneLista"		:	[1,			int],
+						"percorsiDaCompletare"	:	[5000,		int]
+					}
+
 				}
-			}
-	# Popolamento della struttura dati per generare il file di configurazione
-	for section, values in dicti.items():
-		config[section] = values
 
-	# Scrittura del file
-	with open("config.ini","w") as configfile:
-		config.write(configfile)
-	conf = dicti
-	return dicti
+		if isfile("config.ini"):
+			self.carica()
+		else:
+			self.genera()
 
-# Funzione per caricare un file di configurazione.
-def loadConfig():
-	config = configparser.ConfigParser()
-	config.optionxform = str
-
-	# Lettura del file di configurazione
-	config.read("config.ini")
-
-	# Popolamento del dizionario da tenere in memoria
-	dicti = {}
-	for sect in config.sections():
-		dicti[sect] = {}
-		for key in config[sect]:
-			dicti[sect][key] = int(config[sect][key])
-	return dicti
-
-# Funzione per mostrare la configurazione in uso
-def showConfig(conf):
-	for section, params in conf.items():
-		print("\n[{}]\n".format(section))
-		for key,value in params.items():
-			print(key,"=",value)
-	input("\nPremi per continuare...")
-
-# Funzione per alterare la configurazione in uso e salvata nel file
-def changeConfig(conf):
-	flag = True
-	while flag:
-		print("Quale parametro modificare?")
-		i = 1		# Indice delle voci
-		dicti = {}	# Dizionario di appoggio
-		for section, params in conf.items():
-			print("\n[{}]\n".format(section))
-			for key,value in params.items():
-				print("{}) {}: [{}]".format(i,key,value))
-				dicti[i] = [section,key]
-				i += 1
-		print("{}) Indietro".format(i))
-		try:
-			scelta = int(input("\n"))
-			flag = False
-		except ValueError:
-			print("\nInput errato.\n")
-	if scelta in range(1,i):
-		try:
-			valore = int(input("\nInserisci il nuovo valore per {} (premi 0 per annullare): ".format(dicti[scelta][1])))
-		except ValueError:
-			print("\nInput errato, configurazione non modificata.\n")
-			return
-		if valore == 0:
-			print("\nAnnullato.\n")
-			return
-		conf[dicti[scelta][0]][dicti[scelta][1]] = valore # Aggiorno il valore di configurazione
-
-		# Salvataggio su file
-		config = configparser.ConfigParser()
-		config.optionxform = str
+	'''
+	Funzione per generare un nuovo file di configurazione. Viene utilizzato lo schema salvato nella classe come punto di riferimento.
+	'''
+	def genera(self):
+		config = ConfigParser()
+		config.optionxform = str # Per ottenere case sensitive senza alterare altro oltre alla funzione qui riportata
 
 		# Popolamento della struttura dati per generare il file di configurazione
-		for section, values in conf.items():
-			print(section,values)
-			config[section] = values
+		for sezione, valori in self.schema.items():
+			config[sezione] = {} # Crea una sezione con i propri valori
+			for chiave, valore in valori.items():
+				config[sezione][chiave] = str(valore[0])
+				setattr(self, chiave, valore[0]) # Creo un attributo della classe
 
-		with open("config.ini","w") as configfile:
-			config.write(configfile)
-	elif scelta == i: # L'utente torna indietro
-		pass
-	else:
-		print("\nScelta inesistente. Configurazione non modificata\n")
+		# Scrittura del file
+		with open("config.ini","w") as configFile:
+			config.write(configFile)
+	
+	'''
+	Funzione per caricare una configurazione da file.
+	'''
+	def carica(self):
+		config = ConfigParser()
+		config.optionxform = str
 
-if __name__ == "__main__":
-	a = genConfig()
-	a = loadConfig()
-	print(a)
-	showConfig(a)
-	changeConfig(a)
+		# Lettura del file di configurazione
+		config.read("config.ini")
+		
+		self.validazioneTotale(config)
+
+	'''
+	Funzione per salvare la configurazione corrente su file, in modo da renderla permanente.
+	'''
+	def salva(self):
+		config = ConfigParser()
+		config.optionxform = str # Per ottenere case sensitive senza alterare altro oltre alla funzione qui riportata
+
+		# Popolamento della struttura dati per generare il file di configurazione
+		for sezione, valori in self.schema.items():
+			config[sezione] = {} # Crea una sezione con i propri valori
+			for chiave, valore in valori.items():
+				config[sezione][chiave] = str(getattr(self, chiave))
+
+		# Scrittura del file
+		with open("config.ini","w") as configFile:
+			config.write(configFile)
+	
+	'''
+	Funzione per validare un file di configurazione.
+	'''
+	def validazioneTotale(self, config):
+		for sezione, parametri in self.schema.items():
+			if sezione not in config:
+				raise SectionError("Sezione '%s' mancante nel file di configurazione." % sezione)
+			for chiave, valore in parametri.items():
+				if chiave not in config[sezione] or config[sezione][chiave] == '':
+					raise MissingError("Parametro '%s' mancante nella sezione '%s' del file di configurazione." % (chiave, sezione))
+				try:
+					parametro = valore[1](config[sezione][chiave]) # Conversione da stringa a tipologia definita dallo schema
+				except ValueError:
+					print("Errore valore parametro '%s', sezione '%s' del file di configurazione." % (chiave, sezione))
+				else:
+					setattr(self, chiave, parametro)
+	
+	'''
+	Funzione per visualizzare la configurazione utilizzata.
+	'''
+	def mostra(self):
+		for sezione, parametri in self.schema.items():
+			print("[%s]\n" % sezione)
+			for chiave in parametri:
+				print(chiave,"=",getattr(self, chiave))
+			print("")
+	
+	'''
+	Funzione che permette l'alterazione della configurazione. Viene richiesto all'utente quale parametro modificare, successivamente viene richiesto il nuovo valore.
+	'''
+	def modifica(self):
+		flag = True
+		while flag:
+			print("Quale parametro modificare?")
+			i = 1		# Indice delle voci
+			dicti = {}	# Dizionario di appoggio
+			for sezione, parametri in self.schema.items():
+				print("\n[%s]\n" % sezione)
+				for chiave, valore in parametri.items():
+					print("%s) %s: [%s]" % (i, chiave, getattr(self, chiave)))
+					dicti[i] = [sezione, chiave, getattr(self, chiave), valore[1]] # Composizione: sezione, chiave, valore, tipo di dato
+					i += 1
+			
+			# Scelta utente
+			scelta = input("\n(premere Invio per annullare)>: ")
+			if scelta == "":
+				print("\nAnnullato")
+				return
+			try:
+				scelta = int(scelta)
+				if scelta > i - 1 or scelta < 0:
+					raise ValueError()
+			except ValueError:
+				print("\nInput errato.\n")
+			else:
+				flag = False
+		
+		# Scelta accettata, richiesto nuovo valore
+		if scelta in range(1,i):
+			valore = input("\nInserisci il nuovo valore per %s [%s] (premi Invio per annullare)>: " % (dicti[scelta][1], dicti[scelta][2]))
+			if valore == "":
+				print("\nAnnullato.")
+				return
+			else:
+				try:
+					valore = dicti[scelta][3](valore) # Conversione tipo indicato dallo schema
+					if valore < 0:
+						raise ValueError()
+				except ValueError:
+					print("\nInput errato, configurazione non modificata.")
+					return
+
+			setattr(self, dicti[scelta][1], valore) # Aggiorno il valore di configurazione
+
+			# Salvataggio su file
+			config = ConfigParser()
+			config.optionxform = str
+
+			for sezione, valori in self.schema.items():
+				config[sezione] = {} # Crea una sezione con i propri valori
+				for chiave, valore in valori.items():
+					config[sezione][chiave] = str(getattr(self, chiave))
+
+			with open("config.ini","w") as configfile:
+				config.write(configfile)
+		elif scelta == i: # L'utente torna indietro
+			print("")
+		else:
+			print("\nScelta inesistente. Configurazione non modificata\n")
