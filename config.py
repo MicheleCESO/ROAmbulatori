@@ -38,7 +38,7 @@ class Config():
 					"SA":
 					{	"temperatura"			:	[2000.0,	float],
 						"tassoRaffreddamento"	:	[0.99,		float],
-						"iterazioni"			:	[1000,		int],
+						"sogliaCaloreMinimo"	:	[0.0002,	float],
 						"probabilitàScambio"	:	[0.5,		float]
 					},
 

@@ -13,7 +13,7 @@ class Soluzione():
 		self.makeSpan = None						# Il punto in cui l'ultimo ambulatorio smette di lavorare
 
 	'''
-	Funzione per calcolare l'energia di uno stato.
+	Funzione per calcolare l'energia di una soluzione.
 	Il calcolo si basa sulla quantità di spazio non utilizzato che va dall'istante zero, all'istante dell'ultimo ambulatorio che finisce gli esami, ciò definisce una soglia di analisi.
 	Non importa se un ambulatorio termina prima dell'istante definito dalla soglia, tutta quest'area viene considerata negativa, in quanto l'ambulatorio potrebbe eseguire degli esami per alleggerire l'ambulatorio che sta ancora lavorando.
 	'''

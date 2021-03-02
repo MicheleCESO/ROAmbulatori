@@ -114,11 +114,10 @@ class SimulatedAnnealing():
 	def start(self, soluzioneCorrente):
 		print("\nIn esecuzione...")
 	
-		itera = 0;
 		calore = self.config.temperatura
 		
 		soluzioneCorrente.calcolaEnergia()
-		while itera < self.config.iterazioni:
+		while calore > self.config.sogliaCaloreMinimo:
 			calore = calore * self.config.tassoRaffreddamento
 			soluzioneNuova = self.mossa(soluzioneCorrente)
 			soluzioneNuova.calcolaEnergia()
@@ -126,6 +125,7 @@ class SimulatedAnnealing():
 			# Se la soluzione nuova è migliore o nonostante sia peggiore, viene deciso di mantenerla, sostituendo la vecchia energia e soluzione
 			if soluzioneNuova.energia <= soluzioneCorrente.energia or exp(-(soluzioneNuova.energia - soluzioneCorrente.energia)/calore) > uniform(0, 1):
 				soluzioneCorrente = soluzioneNuova
-			itera += 1
+
 		soluzioneCorrente.tipo = "SA"
+
 		return soluzioneCorrente

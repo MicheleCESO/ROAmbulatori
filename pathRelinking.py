@@ -6,30 +6,6 @@ class PathRelinking():
 		self.config = config
 		self.percorsiCompleti = 0
 
-	def dive(self,m1,m2):
-		for a1 in m1:
-			print(a1)
-		print("\n")
-		for a2 in m2:
-			print(a2)
-
-		diversi=0
-		for i in range(len(m1)):
-			for j in range(len(m1[i])):
-				try:
-					if m1[i][j] != m2[i][j]:
-						diversi+=1
-				except IndexError:
-						diversi+=1
-		return diversi
-
-	def test(self, soluzione):
-		print("\n")
-		for paz in soluzione.pazienti:
-			paziente = soluzione.pazienti[paz] 
-			print(paziente.id,soluzione.ambulatori[paziente.ambulatorio][paziente.posizione].id)
-		print("\n")
-
 	def start(self, soluzioneIniziale, soluzioneFinale):
 		self.percorsiCompleti = 0
 		soluzioneA = deepcopy(soluzioneIniziale)
@@ -44,7 +20,7 @@ class PathRelinking():
 		else:
 			soluzioneMigliore = soluzioneA
 		
-		while len(listaSoluzioni) > 0:
+		while len(listaSoluzioni) > 0 and self.percorsiCompleti < self.config.percorsiDaCompletare:
 			prossimaSoluzione = listaSoluzioni.pop(0) # Estrazione prossima soluzione da espandere
 			del listaMatrici[0] # Eliminazione matrice della soluzione già estratta
 			soluzioneMigliore, listaSoluzioni, listaMatrici = self.creaSoluzioni(listaSoluzioni, listaMatrici, prossimaSoluzione, soluzioneB, soluzioneMigliore)
@@ -61,12 +37,15 @@ class PathRelinking():
 			# Condizione in cui un paziente si trova in una posizione diversa rispetto le due soluzioni
 			if soluzioneA.pazienti[idPaziente].ambulatorio != soluzioneB.pazienti[idPaziente].ambulatorio or soluzioneA.pazienti[idPaziente].posizione != soluzioneB.pazienti[idPaziente].posizione:
 				nuovaSoluzione, nuovaMatrice = self.generaSoluzione(soluzioneA, idPaziente, soluzioneB)
-				#print(nuovaSoluzione.livello," --- ",self.dive(nuovaMatrice, soluzioneB.generaMatricePosizione()))
-				#input()
+
 				posizioneStessaEnergia = self.ricercaDicotomica(listaSoluzioni, nuovaSoluzione.energia) # Ricerca posizione nella lista
 				minPosizioneSoluzione, maxPosizioneSoluzione = self.trovaRangeStessaEnergia(listaSoluzioni, posizioneStessaEnergia) # Range soluzioni con identica energia
 				
-				if nuovaMatrice not in listaMatrici[minPosizioneSoluzione:maxPosizioneSoluzione + 1]: # Ricerca duplicati intelligente
+				# E' stata trovata la soluzione finale, quindi è stato completato un percorso
+				if nuovaMatrice == soluzioneB.generaMatricePosizione():
+					self.percorsiCompleti += 1
+
+				elif nuovaMatrice not in listaMatrici[minPosizioneSoluzione:maxPosizioneSoluzione + 1]: # Ricerca duplicati intelligente
 					listaSoluzioni.insert(posizioneStessaEnergia, nuovaSoluzione)
 					listaMatrici.insert(posizioneStessaEnergia, nuovaMatrice)
 					
@@ -78,11 +57,11 @@ class PathRelinking():
 				if nuovaSoluzione.energia < soluzioneMigliore.energia:
 					soluzioneMigliore = nuovaSoluzione
 
-		# E' stata trovata la soluzione finale, quindi è stato completato un percorso
-		if soluzioneA.generaMatricePosizione() == soluzioneB.generaMatricePosizione():
-			self.percorsiCompleti += 1
 		return soluzioneMigliore, listaSoluzioni, listaMatrici
-
+	
+	'''
+	Funzione che crea una singola soluzione figlia.
+	'''
 	def generaSoluzione(self, soluzioneA, idPaziente, soluzioneB):
 		nuovaSoluzione = deepcopy(soluzioneA)
 		
@@ -141,6 +120,9 @@ class PathRelinking():
 		
 		return nuovaSoluzione, matrice
 
+	'''
+	Funzione per lo spostamento di un paziente in modo che uguagli la sua posizione nella soluzione finale.
+	'''
 	def spostaPaziente(self, pazienteA, pazienteB, soluzioneA):
 		soluzioneA.ambulatori[pazienteA.ambulatorio].remove(pazienteA)
 		
